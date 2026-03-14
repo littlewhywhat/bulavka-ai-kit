@@ -8,6 +8,7 @@ import {
   requestUnpin,
   updatePinPreview,
 } from "../../storage";
+import { navigateToPath } from "../../utils/navigate";
 
 type PinItemProps = {
   pin: Pin;
@@ -77,7 +78,12 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
   };
 
   const handleLinkClick = (e: MouseEvent) => {
-    if (renaming) e.preventDefault();
+    if (renaming) {
+      e.preventDefault();
+      return;
+    }
+    e.preventDefault();
+    navigateToPath(`/branch/${pin.conversationId}/${pin.messageId}`);
   };
 
   return (

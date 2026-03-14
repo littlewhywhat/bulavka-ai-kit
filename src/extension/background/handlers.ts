@@ -61,7 +61,9 @@ const TEST_PINNED_CHATS: PinnedChat[] = [
 const seedPinnedChatsIfEmpty = async (): Promise<void> => {
   const chats = await readPinnedChats();
   const existingIds = new Set(chats.map((c) => c.conversationId));
-  const toAdd = TEST_PINNED_CHATS.filter((t) => !existingIds.has(t.conversationId));
+  const toAdd = TEST_PINNED_CHATS.filter(
+    (t) => !existingIds.has(t.conversationId),
+  );
   if (toAdd.length === 0) return;
   await writePinnedChats([...toAdd, ...chats]);
 };

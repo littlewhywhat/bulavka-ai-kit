@@ -10,6 +10,7 @@ import {
   removePinnedChat,
   updatePinnedChatTitle,
 } from "../../pinnedChatsStorage";
+import { navigateToPath } from "../../utils/navigate";
 
 type PinnedChatItemProps = {
   chat: PinnedChat;
@@ -77,7 +78,12 @@ const PinnedChatItem = ({ chat, onUnpinClick }: PinnedChatItemProps) => {
   };
 
   const handleLinkClick = (e: MouseEvent) => {
-    if (renaming) e.preventDefault();
+    if (renaming) {
+      e.preventDefault();
+      return;
+    }
+    e.preventDefault();
+    navigateToPath(`/c/${chat.conversationId}`);
   };
 
   return (
