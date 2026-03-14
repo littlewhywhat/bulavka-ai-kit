@@ -1,30 +1,30 @@
 /** @jsxImportSource preact */
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
-import { INITIAL_PINS_VISIBLE } from "../../../types/messages";
 import {
-  getPins,
-  onPinsChange,
-  type Pin,
-  requestUnpin,
-  updatePinPreview,
-} from "../../storage";
+  INITIAL_PINNED_CHATS_VISIBLE,
+  type PinnedChat,
+} from "../../../types/messages";
+import {
+  getPinnedChats,
+  onPinnedChatsChange,
+  requestUnfavourite,
+  updatePinnedChatTitle,
+} from "../../pinnedChatsStorage";
 import { navigateToPath } from "../../utils/navigate";
 
-type PinItemProps = {
-  pin: Pin;
-  onUnpinClick: (pin: Pin) => void;
+type PinnedChatItemProps = {
+  chat: PinnedChat;
+  onUnpinClick: (chat: PinnedChat) => void;
 };
 
-const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
+const PinnedChatItem = ({ chat, onUnpinClick }: PinnedChatItemProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState({ left: 0, top: 0 });
   const [renaming, setRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState(pin.preview);
+  const [renameValue, setRenameValue] = useState(chat.title);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const pinKey = `${pin.conversationId}:${pin.messageId}`;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -42,11 +42,11 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
 
   const commitRename = useCallback(() => {
     const trimmed = renameValue.trim();
-    if (trimmed && trimmed !== pin.preview) {
-      updatePinPreview(pin.conversationId, pin.messageId, trimmed);
+    if (trimmed && trimmed !== chat.title) {
+      updatePinnedChatTitle(chat.conversationId, trimmed);
     }
     setRenaming(false);
-  }, [renameValue, pin]);
+  }, [renameValue, chat]);
 
   const handleMenuClick = (e: MouseEvent) => {
     e.preventDefault();
@@ -62,7 +62,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
     e.preventDefault();
     e.stopPropagation();
     setMenuOpen(false);
-    setRenameValue(pin.preview);
+    setRenameValue(chat.title);
     setRenaming(true);
   };
 
@@ -83,17 +83,16 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
       return;
     }
     e.preventDefault();
-    navigateToPath(`/branch/${pin.conversationId}/${pin.messageId}`);
+    navigateToPath(`/c/${chat.conversationId}`);
   };
 
   return (
     <a
-      key={pinKey}
       tabIndex={0}
       data-fill=""
       class="group __menu-item hoverable"
       data-sidebar-item="true"
-      href={`/branch/${pin.conversationId}/${pin.messageId}`}
+      href={`/c/${chat.conversationId}`}
       data-discover="true"
       onClick={handleLinkClick}
     >
@@ -113,7 +112,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
             onClick={(e: MouseEvent) => e.preventDefault()}
           />
         ) : (
-          <div class="truncate">{pin.preview || "Pinned message"}</div>
+          <div class="truncate">{chat.title || "Untitled chat"}</div>
         )}
       </div>
       <div class="trailing-pair">
@@ -142,22 +141,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
             </div>
           </button>
         </div>
-        <div class="trailing text-token-text-tertiary" tabIndex={-1}>
-          <span aria-hidden="true">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              aria-hidden="true"
-              class="icon-xs text-token-icon-tertiary opacity-50"
-            >
-              <use
-                href="/cdn/assets/sprites-core-fk4oovux.svg#a8c6bd"
-                fill="currentColor"
-              />
-            </svg>
-          </span>
-        </div>
+        <div class="trailing text-token-text-tertiary" tabIndex={-1} />
         {menuOpen && (
           <div
             ref={menuRef}
@@ -210,13 +194,13 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setMenuOpen(false);
-                onUnpinClick(pin);
+                onUnpinClick(chat);
               }}
               onKeyDown={(e: KeyboardEvent) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
                   setMenuOpen(false);
-                  onUnpinClick(pin);
+                  onUnpinClick(chat);
                 }
               }}
             >
@@ -225,16 +209,21 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
                   height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                   aria-hidden="true"
                   class="icon"
                 >
-                  <use
-                    href="/cdn/assets/sprites-core-fk4oovux.svg#13322a"
-                    fill="currentColor"
-                  />
+                  <path d="m10.344 4.688 1.181-2.393a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.237 3.152" />
+                  <path d="m17.945 17.945.43 2.505a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a8 8 0 0 0 .4-.099" />
+                  <path d="m2 2 20 20" />
                 </svg>
               </div>
-              Unpin
+              Unfavourite
             </div>
           </div>
         )}
@@ -243,17 +232,19 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
   );
 };
 
-const PinsSection = () => {
-  const [pins, setPins] = useState<Pin[]>(getPins);
+const PinnedChatsSection = () => {
+  const [chats, setChats] = useState<PinnedChat[]>(getPinnedChats);
   const [expanded, setExpanded] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-  useEffect(() => onPinsChange(setPins), []);
+  useEffect(() => onPinnedChatsChange(setChats), []);
 
-  if (pins.length === 0) return null;
+  if (chats.length === 0) return null;
 
-  const visible = expanded ? pins : pins.slice(0, INITIAL_PINS_VISIBLE);
-  const hasMore = pins.length > INITIAL_PINS_VISIBLE;
+  const visible = expanded
+    ? chats
+    : chats.slice(0, INITIAL_PINNED_CHATS_VISIBLE);
+  const hasMore = chats.length > INITIAL_PINNED_CHATS_VISIBLE;
 
   return (
     <div class="group/sidebar-expando-section mb-[var(--sidebar-expanded-section-margin-bottom)]">
@@ -264,7 +255,7 @@ const PinsSection = () => {
         onClick={() => setCollapsed((c) => !c)}
       >
         <h2 class="__menu-label" data-no-spacing="true">
-          Pinned replies
+          Favourites
         </h2>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -285,11 +276,11 @@ const PinsSection = () => {
         </svg>
       </button>
       {!collapsed &&
-        visible.map((pin) => (
-          <PinItem
-            key={`${pin.conversationId}:${pin.messageId}`}
-            pin={pin}
-            onUnpinClick={requestUnpin}
+        visible.map((chat) => (
+          <PinnedChatItem
+            key={chat.conversationId}
+            chat={chat}
+            onUnpinClick={(c) => requestUnfavourite(c)}
           />
         ))}
       {!collapsed && hasMore && (
@@ -336,4 +327,4 @@ const PinsSection = () => {
   );
 };
 
-export { PinsSection };
+export { PinnedChatsSection };

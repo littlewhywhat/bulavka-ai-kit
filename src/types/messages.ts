@@ -1,5 +1,7 @@
 const MAX_PINS = 5;
 const INITIAL_PINS_VISIBLE = 3;
+const MAX_PINNED_CHATS = 5;
+const INITIAL_PINNED_CHATS_VISIBLE = 3;
 
 type Pin = {
   conversationId: string;
@@ -8,7 +10,18 @@ type Pin = {
   pinnedAt: number;
 };
 
-export { MAX_PINS, INITIAL_PINS_VISIBLE };
+type PinnedChat = {
+  conversationId: string;
+  title: string;
+  pinnedAt: number;
+};
+
+export {
+  MAX_PINS,
+  INITIAL_PINS_VISIBLE,
+  MAX_PINNED_CHATS,
+  INITIAL_PINNED_CHATS_VISIBLE,
+};
 
 type BackgroundMessages = {
   "pins-get": {
@@ -35,6 +48,26 @@ type BackgroundMessages = {
     request: Pin;
     response: undefined;
   };
+  "pinned-chats-get": {
+    request: undefined;
+    response: PinnedChat[];
+  };
+  "pinned-chats-add": {
+    request: PinnedChat;
+    response: undefined;
+  };
+  "pinned-chats-remove": {
+    request: { conversationId: string };
+    response: undefined;
+  };
+  "pinned-chats-update-title": {
+    request: { conversationId: string; title: string };
+    response: undefined;
+  };
+  "request-show-unfavourite-modal": {
+    request: PinnedChat;
+    response: undefined;
+  };
 };
 
 type ContentMessages = {
@@ -42,6 +75,10 @@ type ContentMessages = {
     request: Pin;
     response: undefined;
   };
+  "show-unfavourite-modal": {
+    request: PinnedChat;
+    response: undefined;
+  };
 };
 
-export type { Pin, BackgroundMessages, ContentMessages };
+export type { Pin, BackgroundMessages, ContentMessages, PinnedChat };
