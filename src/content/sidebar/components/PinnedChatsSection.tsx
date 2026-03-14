@@ -188,6 +188,7 @@ const PinnedChatItem = ({ chat, onUnpinClick }: PinnedChatItemProps) => {
             <div
               role="menuitem"
               tabIndex={0}
+              data-color="danger"
               class="group __menu-item hoverable gap-1.5 w-full"
               onClick={(e: MouseEvent) => {
                 e.preventDefault();
