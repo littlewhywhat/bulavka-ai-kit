@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bulavka AI Kit",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Bulavka AI Kit",
   "icons": {
     "16": "icons/icon16x16.png",
