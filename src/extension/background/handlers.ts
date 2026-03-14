@@ -86,9 +86,9 @@ const registerHandlers = () => {
     },
   );
 
-  onBackgroundMessage("request-show-unpin-modal", (pin, sender) => {
+  onBackgroundMessage("request-show-unpin-modal", async (pin, sender) => {
     if (sender.tab?.id != null) {
-      sendToTab(sender.tab.id, "show-unpin-modal", pin);
+      await sendToTab(sender.tab.id, "show-unpin-modal", pin);
     }
     return undefined;
   });
@@ -112,12 +112,15 @@ const registerHandlers = () => {
     return undefined;
   });
 
-  onBackgroundMessage("request-show-unfavourite-modal", (chat, sender) => {
-    if (sender.tab?.id != null) {
-      sendToTab(sender.tab.id, "show-unfavourite-modal", chat);
-    }
-    return undefined;
-  });
+  onBackgroundMessage(
+    "request-show-unfavourite-modal",
+    async (chat, sender) => {
+      if (sender.tab?.id != null) {
+        await sendToTab(sender.tab.id, "show-unfavourite-modal", chat);
+      }
+      return undefined;
+    },
+  );
 
   onBackgroundMessage(
     "pinned-chats-update-title",
