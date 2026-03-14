@@ -7,7 +7,7 @@ import {
 import {
   getPinnedChats,
   onPinnedChatsChange,
-  removePinnedChat,
+  requestUnfavourite,
   updatePinnedChatTitle,
 } from "../../pinnedChatsStorage";
 import { navigateToPath } from "../../utils/navigate";
@@ -280,7 +280,7 @@ const PinnedChatsSection = () => {
           <PinnedChatItem
             key={chat.conversationId}
             chat={chat}
-            onUnpinClick={(c) => removePinnedChat(c.conversationId)}
+            onUnpinClick={(c) => requestUnfavourite(c)}
           />
         ))}
       {!collapsed && hasMore && (

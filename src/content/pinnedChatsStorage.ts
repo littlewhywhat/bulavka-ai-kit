@@ -16,6 +16,10 @@ const addPinnedChat = (chat: PinnedChat): void => {
   sendMessage("pinned-chats-add", chat);
 };
 
+const requestUnfavourite = (chat: PinnedChat): void => {
+  sendMessage("request-show-unfavourite-modal", chat);
+};
+
 const loadPinnedChats = async (): Promise<PinnedChat[]> => {
   return sendMessage("pinned-chats-get", undefined);
 };
@@ -63,6 +67,7 @@ export {
   getPinnedChats,
   isPinnedChat,
   addPinnedChat,
+  requestUnfavourite,
   loadPinnedChats,
   removePinnedChat,
   updatePinnedChatTitle,

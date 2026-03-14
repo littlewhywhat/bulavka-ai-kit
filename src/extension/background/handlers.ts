@@ -112,6 +112,13 @@ const registerHandlers = () => {
     return undefined;
   });
 
+  onBackgroundMessage("request-show-unfavourite-modal", (chat, sender) => {
+    if (sender.tab?.id != null) {
+      sendToTab(sender.tab.id, "show-unfavourite-modal", chat);
+    }
+    return undefined;
+  });
+
   onBackgroundMessage(
     "pinned-chats-update-title",
     async ({ conversationId, title }) => {

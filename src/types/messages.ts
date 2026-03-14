@@ -64,11 +64,19 @@ type BackgroundMessages = {
     request: { conversationId: string; title: string };
     response: undefined;
   };
+  "request-show-unfavourite-modal": {
+    request: PinnedChat;
+    response: undefined;
+  };
 };
 
 type ContentMessages = {
   "show-unpin-modal": {
     request: Pin;
+    response: undefined;
+  };
+  "show-unfavourite-modal": {
+    request: PinnedChat;
     response: undefined;
   };
 };
