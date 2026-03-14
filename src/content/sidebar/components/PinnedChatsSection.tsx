@@ -141,22 +141,7 @@ const PinnedChatItem = ({ chat, onUnpinClick }: PinnedChatItemProps) => {
             </div>
           </button>
         </div>
-        <div class="trailing text-token-text-tertiary" tabIndex={-1}>
-          <span aria-hidden="true">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              aria-hidden="true"
-              class="icon-xs text-token-icon-tertiary opacity-50"
-            >
-              <use
-                href="/cdn/assets/sprites-core-fk4oovux.svg#a8c6bd"
-                fill="currentColor"
-              />
-            </svg>
-          </span>
-        </div>
+        <div class="trailing text-token-text-tertiary" tabIndex={-1} />
         {menuOpen && (
           <div
             ref={menuRef}
@@ -203,7 +188,6 @@ const PinnedChatItem = ({ chat, onUnpinClick }: PinnedChatItemProps) => {
             <div
               role="menuitem"
               tabIndex={0}
-              data-color="danger"
               class="group __menu-item hoverable gap-1.5 w-full"
               onClick={(e: MouseEvent) => {
                 e.preventDefault();
@@ -224,16 +208,21 @@ const PinnedChatItem = ({ chat, onUnpinClick }: PinnedChatItemProps) => {
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
                   height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                   aria-hidden="true"
                   class="icon"
                 >
-                  <use
-                    href="/cdn/assets/sprites-core-fk4oovux.svg#13322a"
-                    fill="currentColor"
-                  />
+                  <path d="m10.344 4.688 1.181-2.393a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.237 3.152" />
+                  <path d="m17.945 17.945.43 2.505a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a8 8 0 0 0 .4-.099" />
+                  <path d="m2 2 20 20" />
                 </svg>
               </div>
-              Unpin
+              Unfavourite
             </div>
           </div>
         )}
