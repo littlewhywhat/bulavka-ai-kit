@@ -1,0 +1,76 @@
+name: Release Prepare
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Compute next version
+        id: version
+        run: |
+          current=$(jq -r '.version' package.json)
+          IFS='.' read -r major minor patch <<< "$current"
+          case "${{ inputs.release_type }}" in
+            major) major=$((major+1)); minor=0; patch=0 ;;
+            minor) minor=$((minor+1)); patch=0 ;;
+            patch) patch=$((patch+1)) ;;
+          esac
+          echo "value=${major}.${minor}.${patch}" >> $GITHUB_OUTPUT
+
+      - name: Update package.json
+        run: jq ".version = \"${{ steps.version.outputs.value }}\"" package.json > tmp.json && mv tmp.json package.json
+
+      - name: Update manifest.json
+        run: jq ".version = \"${{ steps.version.outputs.value }}\"" manifest.json > tmp.json && mv tmp.json manifest.json
+
+      - name: Update CHANGELOG.md
+        run: |
+          python3 - <<'EOF'
+          import os
+          from datetime import date
+
+          version = os.environ["VERSION"]
+          today = date.today().isoformat()
+
+          with open("CHANGELOG.md", "r") as f:
+              content = f.read()
+
+          content = content.replace(
+              "## [Unreleased]",
+              f"## [Unreleased]\n\n## [{version}] - {today}",
+              1,
+          )
+
+          with open("CHANGELOG.md", "w") as f:
+              f.write(content)
+          EOF
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+
+      - name: Commit and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json manifest.json CHANGELOG.md
+          git commit -m "release: v${{ steps.version.outputs.value }}"
+          git tag "v${{ steps.version.outputs.value }}"
+          git push origin main
+          git push origin "v${{ steps.version.outputs.value }}"
