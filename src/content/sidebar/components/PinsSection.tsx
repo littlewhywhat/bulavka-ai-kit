@@ -9,6 +9,7 @@ import {
   updatePinPreview,
 } from "../../storage";
 import { navigateToPath } from "../../utils/navigate";
+import { useCollapsed } from "../useCollapsed";
 
 type PinItemProps = {
   pin: Pin;
@@ -246,7 +247,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
 const PinsSection = () => {
   const [pins, setPins] = useState<Pin[]>(getPins);
   const [expanded, setExpanded] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useCollapsed("bulavka-pins-collapsed");
 
   useEffect(() => onPinsChange(setPins), []);
 

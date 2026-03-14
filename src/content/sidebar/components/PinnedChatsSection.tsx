@@ -11,6 +11,7 @@ import {
   updatePinnedChatTitle,
 } from "../../pinnedChatsStorage";
 import { navigateToPath } from "../../utils/navigate";
+import { useCollapsed } from "../useCollapsed";
 
 type PinnedChatItemProps = {
   chat: PinnedChat;
@@ -235,7 +236,9 @@ const PinnedChatItem = ({ chat, onUnpinClick }: PinnedChatItemProps) => {
 const PinnedChatsSection = () => {
   const [chats, setChats] = useState<PinnedChat[]>(getPinnedChats);
   const [expanded, setExpanded] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useCollapsed(
+    "bulavka-favourites-collapsed",
+  );
 
   useEffect(() => onPinnedChatsChange(setChats), []);
 
