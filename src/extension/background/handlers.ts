@@ -45,29 +45,6 @@ const writePinnedChats = async (chats: PinnedChat[]): Promise<void> => {
   });
 };
 
-const TEST_PINNED_CHATS: PinnedChat[] = [
-  {
-    conversationId: "test-pinned-chat-1",
-    title: "Test pinned chat",
-    pinnedAt: Date.now() - 1000,
-  },
-  {
-    conversationId: "69b5bf76-be54-832e-89e4-be3fcea17929",
-    title: "Pinned chat",
-    pinnedAt: Date.now(),
-  },
-];
-
-const seedPinnedChatsIfEmpty = async (): Promise<void> => {
-  const chats = await readPinnedChats();
-  const existingIds = new Set(chats.map((c) => c.conversationId));
-  const toAdd = TEST_PINNED_CHATS.filter(
-    (t) => !existingIds.has(t.conversationId),
-  );
-  if (toAdd.length === 0) return;
-  await writePinnedChats([...toAdd, ...chats]);
-};
-
 const registerHandlers = () => {
   onBackgroundMessage("pins-get", async () => readPins());
 
@@ -146,8 +123,6 @@ const registerHandlers = () => {
       return undefined;
     },
   );
-
-  seedPinnedChatsIfEmpty();
 };
 
 export { registerHandlers };

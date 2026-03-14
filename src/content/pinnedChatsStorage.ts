@@ -5,7 +5,16 @@ const STORAGE_KEY = "bulavka-ai-kit-pinned-chats";
 
 type Listener = (chats: PinnedChat[]) => void;
 
-const getPinnedChats = (): PinnedChat[] => [];
+let cachedChats: PinnedChat[] = [];
+
+const getPinnedChats = (): PinnedChat[] => cachedChats;
+
+const isPinnedChat = (conversationId: string): boolean =>
+  cachedChats.some((c) => c.conversationId === conversationId);
+
+const addPinnedChat = (chat: PinnedChat): void => {
+  sendMessage("pinned-chats-add", chat);
+};
 
 const loadPinnedChats = async (): Promise<PinnedChat[]> => {
   return sendMessage("pinned-chats-get", undefined);
@@ -19,6 +28,16 @@ const updatePinnedChatTitle = (conversationId: string, title: string): void => {
   sendMessage("pinned-chats-update-title", { conversationId, title });
 };
 
+const parseChats = (raw: unknown): PinnedChat[] => {
+  try {
+    if (typeof raw === "string") return JSON.parse(raw) as PinnedChat[];
+    if (Array.isArray(raw)) return raw;
+    return [];
+  } catch {
+    return [];
+  }
+};
+
 const onPinnedChatsChange = (cb: Listener): (() => void) => {
   const handler = (
     changes: { [key: string]: chrome.storage.StorageChange },
@@ -27,27 +46,23 @@ const onPinnedChatsChange = (cb: Listener): (() => void) => {
     if (areaName !== "sync" || !changes[STORAGE_KEY]) return;
     const raw = changes[STORAGE_KEY].newValue;
     if (raw === undefined) return;
-    try {
-      const chats: PinnedChat[] =
-        typeof raw === "string"
-          ? (JSON.parse(raw) as PinnedChat[])
-          : Array.isArray(raw)
-            ? raw
-            : [];
-      cb(chats);
-    } catch {
-      cb([]);
-    }
+    cachedChats = parseChats(raw);
+    cb(cachedChats);
   };
   chrome.storage.onChanged.addListener(handler);
 
-  loadPinnedChats().then(cb);
+  loadPinnedChats().then((chats) => {
+    cachedChats = chats;
+    cb(cachedChats);
+  });
 
   return () => chrome.storage.onChanged.removeListener(handler);
 };
 
 export {
   getPinnedChats,
+  isPinnedChat,
+  addPinnedChat,
   loadPinnedChats,
   removePinnedChat,
   updatePinnedChatTitle,

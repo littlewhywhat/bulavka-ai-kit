@@ -112,7 +112,7 @@ const PinnedChatItem = ({ chat, onUnpinClick }: PinnedChatItemProps) => {
             onClick={(e: MouseEvent) => e.preventDefault()}
           />
         ) : (
-          <div class="truncate">{chat.title || "Pinned chat"}</div>
+          <div class="truncate">{chat.title || "Untitled chat"}</div>
         )}
       </div>
       <div class="trailing-pair">
@@ -265,7 +265,7 @@ const PinnedChatsSection = () => {
         onClick={() => setCollapsed((c) => !c)}
       >
         <h2 class="__menu-label" data-no-spacing="true">
-          Pinned chats
+          Favourites
         </h2>
         <svg
           xmlns="http://www.w3.org/2000/svg"
