@@ -1,6 +1,5 @@
 /** @jsxImportSource preact */
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
-import { INITIAL_PINS_VISIBLE } from "../../../types/messages";
 import {
   getPins,
   onPinsChange,
@@ -10,6 +9,7 @@ import {
 } from "../../storage";
 import { navigateToPath } from "../../utils/navigate";
 import { useCollapsed } from "../useCollapsed";
+import { useSettingsValue } from "../useSettingsValue";
 
 type PinItemProps = {
   pin: Pin;
@@ -248,13 +248,14 @@ const PinsSection = () => {
   const [pins, setPins] = useState<Pin[]>(getPins);
   const [expanded, setExpanded] = useState(false);
   const [collapsed, setCollapsed] = useCollapsed("bulavka-pins-collapsed");
+  const initialVisible = useSettingsValue("initialPinsVisible", 3);
 
   useEffect(() => onPinsChange(setPins), []);
 
   if (pins.length === 0) return null;
 
-  const visible = expanded ? pins : pins.slice(0, INITIAL_PINS_VISIBLE);
-  const hasMore = pins.length > INITIAL_PINS_VISIBLE;
+  const visible = expanded ? pins : pins.slice(0, initialVisible);
+  const hasMore = pins.length > initialVisible;
 
   return (
     <div class="group/sidebar-expando-section mb-[var(--sidebar-expanded-section-margin-bottom)]">

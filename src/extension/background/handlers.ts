@@ -1,10 +1,6 @@
-import {
-  MAX_PINNED_CHATS,
-  MAX_PINS,
-  type Pin,
-  type PinnedChat,
-} from "../../types/messages";
+import type { Pin, PinnedChat } from "../../types/messages";
 import { onBackgroundMessage, sendToTab } from "../shared/messaging";
+import { storage } from "../shared/storage";
 
 const STORAGE_KEY = "bulavka-ai-kit-pins";
 const PINNED_CHATS_STORAGE_KEY = "bulavka-ai-kit-pinned-chats";
@@ -49,6 +45,7 @@ const registerHandlers = () => {
   onBackgroundMessage("pins-get", async () => readPins());
 
   onBackgroundMessage("pins-add", async (pin) => {
+    const maxPins = await storage.get("maxPins");
     const pins = await readPins();
     const filtered = pins.filter(
       (p) =>
@@ -58,7 +55,7 @@ const registerHandlers = () => {
         ),
     );
     filtered.unshift(pin);
-    await writePins(filtered.slice(0, MAX_PINS));
+    await writePins(filtered.slice(0, maxPins));
     return undefined;
   });
 
@@ -96,12 +93,13 @@ const registerHandlers = () => {
   onBackgroundMessage("pinned-chats-get", async () => readPinnedChats());
 
   onBackgroundMessage("pinned-chats-add", async (chat) => {
+    const maxPinnedChats = await storage.get("maxPinnedChats");
     const chats = await readPinnedChats();
     const filtered = chats.filter(
       (c) => c.conversationId !== chat.conversationId,
     );
     filtered.unshift(chat);
-    await writePinnedChats(filtered.slice(0, MAX_PINNED_CHATS));
+    await writePinnedChats(filtered.slice(0, maxPinnedChats));
     return undefined;
   });
 

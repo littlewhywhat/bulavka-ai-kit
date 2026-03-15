@@ -1,6 +1,6 @@
 /** @jsxImportSource preact */
 import { useEffect, useRef, useState } from "preact/hooks";
-import { MAX_PINS } from "../../../types/messages";
+import { useSettingsValue } from "../../sidebar/useSettingsValue";
 import { addPin, onPinsChange, type Pin, requestUnpin } from "../../storage";
 import { getConversationIdFromUrl } from "../../utils/chatgpt";
 import * as tooltip from "../tooltip";
@@ -55,7 +55,8 @@ const PinButton = ({ available }: PinButtonProps) => {
     return onPinsChange(update);
   }, [available]);
 
-  const atLimit = available && !pinned && pinCount >= MAX_PINS;
+  const maxPins = useSettingsValue("maxPins", 5);
+  const atLimit = available && !pinned && pinCount >= maxPins;
 
   const handleClick = (e: MouseEvent) => {
     e.stopPropagation();

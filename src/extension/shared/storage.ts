@@ -1,8 +1,18 @@
 import { createStorage } from "../../common/extension/storage";
 
-const defaults = {
+const defaults: {
+  enabled: boolean;
+  maxPins: number;
+  initialPinsVisible: number;
+  maxPinnedChats: number;
+  initialPinnedChatsVisible: number;
+} = {
   enabled: true,
-} as const;
+  maxPins: 5,
+  initialPinsVisible: 3,
+  maxPinnedChats: 5,
+  initialPinnedChatsVisible: 3,
+};
 
 export const storage = createStorage(defaults);
 export type StorageSchema = typeof defaults;
