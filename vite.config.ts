@@ -10,6 +10,19 @@ export default defineConfig({
     crx({ manifest }),
     zip({ outDir: "release", outFileName: "release.zip" }),
   ],
+  build: {
+    rollupOptions: {
+      onwarn(warning, defaultHandler) {
+        if (
+          warning.code === "MODULE_LEVEL_DIRECTIVE" &&
+          /"use client"/.test(warning.message ?? "") &&
+          /@radix-ui\//.test(warning.id ?? "")
+        )
+          return;
+        defaultHandler(warning);
+      },
+    },
+  },
   server: {
     cors: {
       origin: [/chrome-extension:\/\//],
