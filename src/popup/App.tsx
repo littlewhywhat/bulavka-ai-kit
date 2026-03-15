@@ -8,7 +8,9 @@ import {
   Text,
   TextField,
   Theme,
+  Tooltip,
 } from "@radix-ui/themes";
+import { Info } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { storage } from "../extension/shared/storage";
@@ -332,9 +334,18 @@ const App = () => {
 
         <Flex direction="column" gap="3">
           <Flex align="center" justify="between">
-            <Text size="2" weight="bold" color="gray">
-              Favourites
-            </Text>
+            <Flex align="center" gap="1">
+              <Text size="2" weight="bold" color="gray">
+                Favourites
+              </Text>
+              <Tooltip content={"Favourite chats\nfor quick access"}>
+                <Info
+                  size={14}
+                  color="var(--gray-a8)"
+                  style={{ cursor: "default" }}
+                />
+              </Tooltip>
+            </Flex>
             <Controller
               name="pinnedChatsSectionEnabled"
               control={control}
@@ -407,9 +418,18 @@ const App = () => {
           <Separator size="4" />
 
           <Flex align="center" justify="between">
-            <Text size="2" weight="bold" color="gray">
-              Pinned Replies
-            </Text>
+            <Flex align="center" gap="1">
+              <Text size="2" weight="bold" color="gray">
+                Pinned Replies
+              </Text>
+              <Tooltip content={"Pin AI replies to follow up\non them anytime"}>
+                <Info
+                  size={14}
+                  color="var(--gray-a8)"
+                  style={{ cursor: "default" }}
+                />
+              </Tooltip>
+            </Flex>
             <Controller
               name="pinsSectionEnabled"
               control={control}
