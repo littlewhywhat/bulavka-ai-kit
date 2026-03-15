@@ -339,13 +339,15 @@ const App = () => {
               name="pinsSectionEnabled"
               control={control}
               render={({ field }) => (
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={(v) => {
-                    field.onChange(v);
-                    save("pinsSectionEnabled", v);
-                  }}
-                />
+                <Theme accentColor="green">
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(v) => {
+                      field.onChange(v);
+                      save("pinsSectionEnabled", v);
+                    }}
+                  />
+                </Theme>
               )}
             />
           </Flex>
@@ -412,13 +414,15 @@ const App = () => {
               name="pinnedChatsSectionEnabled"
               control={control}
               render={({ field }) => (
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={(v) => {
-                    field.onChange(v);
-                    save("pinnedChatsSectionEnabled", v);
-                  }}
-                />
+                <Theme accentColor="green">
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(v) => {
+                      field.onChange(v);
+                      save("pinnedChatsSectionEnabled", v);
+                    }}
+                  />
+                </Theme>
               )}
             />
           </Flex>
