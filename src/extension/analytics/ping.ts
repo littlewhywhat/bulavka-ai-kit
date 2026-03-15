@@ -1,11 +1,6 @@
-import { getEndpoint } from "./endpoint";
+import { getEndpoint, getProjectToken } from "./endpoint";
 import { analyticsStorage } from "./storage";
-import type {
-  ExtensionEventPayload,
-  FavouriteChatPayload,
-  PinMessagePayload,
-  SettingChangePayload,
-} from "./types";
+import type { ExtensionEventPayload, UserAction } from "./types";
 
 let extensionStartTime: number | null = null;
 
@@ -32,84 +27,75 @@ const sendPayload = async (payload: ExtensionEventPayload): Promise<void> => {
   }
 };
 
-const sendHeartbeat = async (): Promise<void> => {
+const buildLifecycleFields = (now: number) => {
+  const ua = navigator.userAgent;
+  const start = extensionStartTime ?? now;
+
+  return {
+    uptime_ms: now - start,
+    is_webdriver: navigator.webdriver ?? false,
+    is_headless: ua.includes("HeadlessChrome"),
+    browser: getBrowserInfo(),
+    platform: navigator.platform,
+    language: navigator.language,
+  };
+};
+
+const sendLifecycleEvent = async (
+  eventType: "ping" | "install" | "update",
+): Promise<void> => {
   captureStartTime();
   const stored = await analyticsStorage.get();
   if (stored?.uuid == null) return;
 
   const manifest = chrome.runtime.getManifest();
   const now = Date.now();
-  const sequence = (stored.ping_sequence ?? 0) + 1;
-  const ua = navigator.userAgent;
-  const isHeadless = ua.includes("HeadlessChrome");
-  const start = extensionStartTime ?? now;
+  const sequence =
+    eventType === "ping"
+      ? (stored.ping_sequence ?? 0) + 1
+      : (stored.ping_sequence ?? 0);
 
   const payload: ExtensionEventPayload = {
-    event_type: "heartbeat",
+    event_type: eventType,
+    project_token: getProjectToken(),
     uuid: stored.uuid,
+    current_version: manifest.version,
+    timestamp: now,
     installed_at: stored.installed_at ?? 0,
     installed_version: stored.installed_version ?? "",
     updated_at: stored.updated_at ?? 0,
     updated_version: stored.updated_version ?? "",
-    current_version: manifest.version,
     update_url: manifest.update_url ?? null,
     pinged_at: now,
     last_pinged_at: stored.last_pinged_at ?? null,
     last_startup_at: stored.last_startup_at ?? null,
     ping_sequence: sequence,
-    uptime_ms: now - start,
-    is_webdriver: navigator.webdriver ?? false,
-    is_headless: isHeadless,
-    browser: getBrowserInfo(),
-    platform: navigator.platform,
-    language: navigator.language,
+    ...buildLifecycleFields(now),
   };
 
   await sendPayload(payload);
-  await analyticsStorage.set({ last_pinged_at: now, ping_sequence: sequence });
+
+  if (eventType === "ping") {
+    await analyticsStorage.set({
+      last_pinged_at: now,
+      ping_sequence: sequence,
+    });
+  }
 };
 
-const sendSettingChange = async (
-  key: string,
-  value: unknown,
-): Promise<void> => {
+const sendUserAction = async (action: UserAction): Promise<void> => {
   const stored = await analyticsStorage.get();
   if (stored?.uuid == null) return;
 
-  const payload: SettingChangePayload = {
-    event_type: "setting_change",
+  const payload: ExtensionEventPayload = {
+    event_type: "user_action",
+    project_token: getProjectToken(),
     uuid: stored.uuid,
+    current_version: chrome.runtime.getManifest().version,
     timestamp: Date.now(),
-    key,
-    value,
+    action,
   };
   await sendPayload(payload);
 };
 
-const sendPinMessage = async (value: boolean): Promise<void> => {
-  const stored = await analyticsStorage.get();
-  if (stored?.uuid == null) return;
-
-  const payload: PinMessagePayload = {
-    event_type: "pin_message",
-    uuid: stored.uuid,
-    timestamp: Date.now(),
-    value,
-  };
-  await sendPayload(payload);
-};
-
-const sendFavouriteChat = async (value: boolean): Promise<void> => {
-  const stored = await analyticsStorage.get();
-  if (stored?.uuid == null) return;
-
-  const payload: FavouriteChatPayload = {
-    event_type: "favourite_chat",
-    uuid: stored.uuid,
-    timestamp: Date.now(),
-    value,
-  };
-  await sendPayload(payload);
-};
-
-export { sendHeartbeat, sendSettingChange, sendPinMessage, sendFavouriteChat };
+export { sendLifecycleEvent, sendUserAction };

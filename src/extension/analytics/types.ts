@@ -9,14 +9,28 @@ type AnalyticsStorageSchema = {
   ping_sequence: number;
 };
 
-type HeartbeatPayload = {
-  event_type: "heartbeat";
+type UserAction =
+  | "pin_reply"
+  | "unpin_reply"
+  | "favourite_chat"
+  | "unfavourite_chat"
+  | "enable_favourites_chats"
+  | "disable_favourites_chats"
+  | "enable_pin_replies"
+  | "disable_pin_replies";
+
+type CommonFields = {
+  project_token: string;
   uuid: string;
+  current_version: string;
+  timestamp: number;
+};
+
+type LifecycleFields = {
   installed_at: number;
   installed_version: string;
   updated_at: number;
   updated_version: string;
-  current_version: string;
   update_url: string | null;
   pinged_at: number;
   last_pinged_at: number | null;
@@ -30,39 +44,28 @@ type HeartbeatPayload = {
   language: string;
 };
 
-type SettingChangePayload = {
-  event_type: "setting_change";
-  uuid: string;
-  timestamp: number;
-  key: string;
-  value: unknown;
-};
+type PingPayload = CommonFields & LifecycleFields & { event_type: "ping" };
+type InstallPayload = CommonFields &
+  LifecycleFields & { event_type: "install" };
+type UpdatePayload = CommonFields & LifecycleFields & { event_type: "update" };
 
-type PinMessagePayload = {
-  event_type: "pin_message";
-  uuid: string;
-  timestamp: number;
-  value: boolean;
-};
-
-type FavouriteChatPayload = {
-  event_type: "favourite_chat";
-  uuid: string;
-  timestamp: number;
-  value: boolean;
+type UserActionPayload = CommonFields & {
+  event_type: "user_action";
+  action: UserAction;
 };
 
 type ExtensionEventPayload =
-  | HeartbeatPayload
-  | SettingChangePayload
-  | PinMessagePayload
-  | FavouriteChatPayload;
+  | PingPayload
+  | InstallPayload
+  | UpdatePayload
+  | UserActionPayload;
 
 export type {
   AnalyticsStorageSchema,
   ExtensionEventPayload,
-  FavouriteChatPayload,
-  HeartbeatPayload,
-  PinMessagePayload,
-  SettingChangePayload,
+  InstallPayload,
+  PingPayload,
+  UpdatePayload,
+  UserAction,
+  UserActionPayload,
 };

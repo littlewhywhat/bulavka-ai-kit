@@ -1,18 +1,19 @@
-import { sendHeartbeat, sendSettingChange } from "./ping";
+import { sendLifecycleEvent, sendUserAction } from "./ping";
 import { analyticsStorage } from "./storage";
 
 const HEARTBEAT_ALARM = "heartbeat";
 const HEARTBEAT_MINUTES = 360;
 
-const SETTINGS_KEYS = new Set([
-  "enabled",
-  "maxPins",
-  "initialPinsVisible",
-  "maxPinnedChats",
-  "initialPinnedChatsVisible",
-  "pinsSectionEnabled",
-  "pinnedChatsSectionEnabled",
-]);
+const TOGGLE_TO_ACTION = {
+  pinsSectionEnabled: {
+    on: "enable_pin_replies",
+    off: "disable_pin_replies",
+  },
+  pinnedChatsSectionEnabled: {
+    on: "enable_favourites_chats",
+    off: "disable_favourites_chats",
+  },
+} as const;
 
 const setupAlarm = (): void => {
   chrome.alarms.get(HEARTBEAT_ALARM, (existing) => {
@@ -37,6 +38,7 @@ const onInstalled = async (reason: string): Promise<void> => {
       updated_version: version,
       ping_sequence: 0,
     });
+    sendLifecycleEvent("install");
   }
 
   if (reason === "update") {
@@ -56,6 +58,7 @@ const onInstalled = async (reason: string): Promise<void> => {
         updated_version: version,
       });
     }
+    sendLifecycleEvent("update");
   }
 
   setupAlarm();
@@ -67,7 +70,7 @@ const onStartup = async (): Promise<void> => {
 
 const onAlarm = async (alarm: chrome.alarms.Alarm): Promise<void> => {
   if (alarm.name !== HEARTBEAT_ALARM) return;
-  await sendHeartbeat();
+  await sendLifecycleEvent("ping");
 };
 
 const onStorageChange = (
@@ -77,8 +80,10 @@ const onStorageChange = (
   if (areaName !== "local") return;
 
   for (const [key, change] of Object.entries(changes)) {
-    if (SETTINGS_KEYS.has(key) && change?.newValue !== undefined) {
-      sendSettingChange(key, change.newValue);
+    const mapping = TOGGLE_TO_ACTION[key as keyof typeof TOGGLE_TO_ACTION];
+    if (mapping != null && change?.newValue !== undefined) {
+      const action = change.newValue ? mapping.on : mapping.off;
+      sendUserAction(action);
     }
   }
 };

@@ -3,4 +3,5 @@
 
 interface ImportMetaEnv {
   readonly VITE_ANALYTICS_ENDPOINT?: string;
+  readonly VITE_PROJECT_TOKEN?: string;
 }
