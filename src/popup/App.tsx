@@ -333,81 +333,6 @@ const App = () => {
         <Flex direction="column" gap="3">
           <Flex align="center" justify="between">
             <Text size="2" weight="bold" color="gray">
-              Pinned Replies
-            </Text>
-            <Controller
-              name="pinsSectionEnabled"
-              control={control}
-              render={({ field }) => (
-                <Theme accentColor="green">
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={(v) => {
-                      field.onChange(v);
-                      save("pinsSectionEnabled", v);
-                    }}
-                  />
-                </Theme>
-              )}
-            />
-          </Flex>
-
-          <Flex align="center" justify="between">
-            <Text size="2">Initially visible</Text>
-            <Controller
-              name="initialPinsVisible"
-              control={control}
-              render={({ field }) => (
-                <NumberStepper
-                  value={field.value}
-                  onChange={(v) => {
-                    field.onChange(v);
-                    save("initialPinsVisible", v);
-                  }}
-                  onBlur={field.onBlur}
-                  onBoundary={showError}
-                  min={1}
-                  max={maxPins}
-                  minMessage="Minimum is 1"
-                  maxMessage={`Can't exceed maximum (${maxPins})`}
-                  disabled={!pinsSectionEnabled}
-                />
-              )}
-            />
-          </Flex>
-
-          <Flex align="center" justify="between">
-            <Text size="2">Maximum</Text>
-            <Controller
-              name="maxPins"
-              control={control}
-              render={({ field }) => (
-                <NumberStepper
-                  value={field.value}
-                  onChange={(v) => {
-                    field.onChange(v);
-                    save("maxPins", v);
-                  }}
-                  onBlur={field.onBlur}
-                  onBoundary={showError}
-                  min={Math.max(1, counts.pinCount)}
-                  max={ABSOLUTE_MAX}
-                  minMessage={
-                    counts.pinCount > 1
-                      ? `You have ${counts.pinCount} pinned replies`
-                      : "Minimum is 1"
-                  }
-                  maxMessage={`Can't exceed ${ABSOLUTE_MAX}`}
-                  disabled={!pinsSectionEnabled}
-                />
-              )}
-            />
-          </Flex>
-
-          <Separator size="4" />
-
-          <Flex align="center" justify="between">
-            <Text size="2" weight="bold" color="gray">
               Favourites
             </Text>
             <Controller
@@ -474,6 +399,81 @@ const App = () => {
                   }
                   maxMessage={`Can't exceed ${ABSOLUTE_MAX}`}
                   disabled={!pinnedChatsSectionEnabled}
+                />
+              )}
+            />
+          </Flex>
+
+          <Separator size="4" />
+
+          <Flex align="center" justify="between">
+            <Text size="2" weight="bold" color="gray">
+              Pinned Replies
+            </Text>
+            <Controller
+              name="pinsSectionEnabled"
+              control={control}
+              render={({ field }) => (
+                <Theme accentColor="green">
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(v) => {
+                      field.onChange(v);
+                      save("pinsSectionEnabled", v);
+                    }}
+                  />
+                </Theme>
+              )}
+            />
+          </Flex>
+
+          <Flex align="center" justify="between">
+            <Text size="2">Initially visible</Text>
+            <Controller
+              name="initialPinsVisible"
+              control={control}
+              render={({ field }) => (
+                <NumberStepper
+                  value={field.value}
+                  onChange={(v) => {
+                    field.onChange(v);
+                    save("initialPinsVisible", v);
+                  }}
+                  onBlur={field.onBlur}
+                  onBoundary={showError}
+                  min={1}
+                  max={maxPins}
+                  minMessage="Minimum is 1"
+                  maxMessage={`Can't exceed maximum (${maxPins})`}
+                  disabled={!pinsSectionEnabled}
+                />
+              )}
+            />
+          </Flex>
+
+          <Flex align="center" justify="between">
+            <Text size="2">Maximum</Text>
+            <Controller
+              name="maxPins"
+              control={control}
+              render={({ field }) => (
+                <NumberStepper
+                  value={field.value}
+                  onChange={(v) => {
+                    field.onChange(v);
+                    save("maxPins", v);
+                  }}
+                  onBlur={field.onBlur}
+                  onBoundary={showError}
+                  min={Math.max(1, counts.pinCount)}
+                  max={ABSOLUTE_MAX}
+                  minMessage={
+                    counts.pinCount > 1
+                      ? `You have ${counts.pinCount} pinned replies`
+                      : "Minimum is 1"
+                  }
+                  maxMessage={`Can't exceed ${ABSOLUTE_MAX}`}
+                  disabled={!pinsSectionEnabled}
                 />
               )}
             />
