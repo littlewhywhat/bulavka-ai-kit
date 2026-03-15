@@ -1,8 +1,3 @@
-const MAX_PINS = 5;
-const INITIAL_PINS_VISIBLE = 3;
-const MAX_PINNED_CHATS = 5;
-const INITIAL_PINNED_CHATS_VISIBLE = 3;
-
 type Pin = {
   conversationId: string;
   messageId: string;
@@ -14,13 +9,6 @@ type PinnedChat = {
   conversationId: string;
   title: string;
   pinnedAt: number;
-};
-
-export {
-  MAX_PINS,
-  INITIAL_PINS_VISIBLE,
-  MAX_PINNED_CHATS,
-  INITIAL_PINNED_CHATS_VISIBLE,
 };
 
 type BackgroundMessages = {

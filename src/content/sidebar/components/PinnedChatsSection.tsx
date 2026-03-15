@@ -1,9 +1,6 @@
 /** @jsxImportSource preact */
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
-import {
-  INITIAL_PINNED_CHATS_VISIBLE,
-  type PinnedChat,
-} from "../../../types/messages";
+import type { PinnedChat } from "../../../types/messages";
 import {
   getPinnedChats,
   onPinnedChatsChange,
@@ -12,6 +9,7 @@ import {
 } from "../../pinnedChatsStorage";
 import { navigateToPath } from "../../utils/navigate";
 import { useCollapsed } from "../useCollapsed";
+import { useSettingsValue } from "../useSettingsValue";
 
 type PinnedChatItemProps = {
   chat: PinnedChat;
@@ -239,15 +237,14 @@ const PinnedChatsSection = () => {
   const [collapsed, setCollapsed] = useCollapsed(
     "bulavka-favourites-collapsed",
   );
+  const initialVisible = useSettingsValue("initialPinnedChatsVisible", 3);
 
   useEffect(() => onPinnedChatsChange(setChats), []);
 
   if (chats.length === 0) return null;
 
-  const visible = expanded
-    ? chats
-    : chats.slice(0, INITIAL_PINNED_CHATS_VISIBLE);
-  const hasMore = chats.length > INITIAL_PINNED_CHATS_VISIBLE;
+  const visible = expanded ? chats : chats.slice(0, initialVisible);
+  const hasMore = chats.length > initialVisible;
 
   return (
     <div class="group/sidebar-expando-section mb-[var(--sidebar-expanded-section-margin-bottom)]">
