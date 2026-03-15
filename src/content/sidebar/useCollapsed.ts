@@ -1,27 +1,25 @@
-import { useEffect, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
 
 const useCollapsed = (
   storageKey: string,
 ): [boolean, (updater: (prev: boolean) => boolean) => void] => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    chrome.storage.local.get(storageKey).then((result) => {
-      if (result[storageKey] === true) setCollapsed(true);
-      setLoaded(true);
-    });
-  }, [storageKey]);
+  const [collapsed, setCollapsed] = useState(
+    () =>
+      typeof localStorage !== "undefined" &&
+      localStorage.getItem(storageKey) === "true",
+  );
 
   const toggle = (updater: (prev: boolean) => boolean) => {
     setCollapsed((prev) => {
       const next = updater(prev);
-      chrome.storage.local.set({ [storageKey]: next });
+      try {
+        localStorage.setItem(storageKey, next ? "true" : "false");
+      } catch {}
       return next;
     });
   };
 
-  return [loaded ? collapsed : false, toggle];
+  return [collapsed, toggle];
 };
 
 export { useCollapsed };

@@ -275,7 +275,7 @@ const PinsSection = () => {
           data-rtl-flip=""
           class={
             collapsed
-              ? "hidden h-3 w-3 shrink-0 group-hover/sidebar-expando-section:block"
+              ? "h-3 w-3 shrink-0"
               : "invisible h-3 w-3 shrink-0 group-hover/sidebar-expando-section:visible"
           }
         >
