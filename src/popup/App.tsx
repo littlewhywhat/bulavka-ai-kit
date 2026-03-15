@@ -173,7 +173,7 @@ const NumberStepper = ({
   };
 
   return (
-    <Flex align="center" gap="1">
+    <Flex align="stretch" gap="1">
       <TextField.Root
         value={display}
         onChange={handleInput}
@@ -184,7 +184,7 @@ const NumberStepper = ({
         disabled={disabled}
       />
       <IconButton
-        size="1"
+        size="2"
         variant="soft"
         color="gray"
         type="button"
@@ -194,7 +194,7 @@ const NumberStepper = ({
         <MinusSvg />
       </IconButton>
       <IconButton
-        size="1"
+        size="2"
         variant="soft"
         color="gray"
         type="button"
