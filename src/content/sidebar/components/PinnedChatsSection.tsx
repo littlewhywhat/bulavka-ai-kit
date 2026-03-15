@@ -238,9 +238,11 @@ const PinnedChatsSection = () => {
     "bulavka-favourites-collapsed",
   );
   const initialVisible = useSettingsValue("initialPinnedChatsVisible", 3);
+  const sectionEnabled = useSettingsValue("pinnedChatsSectionEnabled", true);
 
   useEffect(() => onPinnedChatsChange(setChats), []);
 
+  if (!sectionEnabled) return null;
   if (chats.length === 0) return null;
 
   const visible = expanded ? chats : chats.slice(0, initialVisible);
