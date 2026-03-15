@@ -27,7 +27,7 @@ const extractPreview = (btn: HTMLElement): string => {
   return text
     .trim()
     .replace(/^ChatGPT\s*(said)?:?\s*/i, "")
-    .slice(0, 60);
+    .slice(0, 40);
 };
 
 const PinButton = ({ available }: PinButtonProps) => {
