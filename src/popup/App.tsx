@@ -4,6 +4,7 @@ import {
   Heading,
   IconButton,
   Separator,
+  Switch,
   Text,
   TextField,
   Theme,
@@ -52,6 +53,8 @@ const readCounts = async () => {
 };
 
 type FormValues = {
+  pinsSectionEnabled: boolean;
+  pinnedChatsSectionEnabled: boolean;
   initialPinsVisible: number;
   maxPins: number;
   initialPinnedChatsVisible: number;
@@ -67,6 +70,7 @@ type NumberStepperProps = {
   max: number;
   minMessage: string;
   maxMessage: string;
+  disabled?: boolean;
 };
 
 const MinusSvg = () => (
@@ -109,6 +113,7 @@ const NumberStepper = ({
   max,
   minMessage,
   maxMessage,
+  disabled,
 }: NumberStepperProps) => {
   const [display, setDisplay] = useState(String(value));
   const [error, setError] = useState(false);
@@ -176,6 +181,7 @@ const NumberStepper = ({
         color={error ? "red" : undefined}
         style={{ width: 56, textAlign: "center" }}
         size="2"
+        disabled={disabled}
       />
       <IconButton
         size="1"
@@ -183,6 +189,7 @@ const NumberStepper = ({
         color="gray"
         type="button"
         onClick={() => step(-1)}
+        disabled={disabled}
       >
         <MinusSvg />
       </IconButton>
@@ -192,6 +199,7 @@ const NumberStepper = ({
         color="gray"
         type="button"
         onClick={() => step(1)}
+        disabled={disabled}
       >
         <PlusSvg />
       </IconButton>
@@ -214,6 +222,8 @@ const App = () => {
   const { control, reset, watch, setValue, getValues } = useForm<FormValues>({
     mode: "onChange",
     defaultValues: {
+      pinsSectionEnabled: true,
+      pinnedChatsSectionEnabled: true,
       initialPinsVisible: 3,
       maxPins: 5,
       initialPinnedChatsVisible: 3,
@@ -221,12 +231,16 @@ const App = () => {
     },
   });
 
+  const pinsSectionEnabled = watch("pinsSectionEnabled");
+  const pinnedChatsSectionEnabled = watch("pinnedChatsSectionEnabled");
   const maxPins = watch("maxPins");
   const maxPinnedChats = watch("maxPinnedChats");
 
   useEffect(() => {
     Promise.all([storage.getAll(), readCounts()]).then(([s, c]) => {
       reset({
+        pinsSectionEnabled: s.pinsSectionEnabled,
+        pinnedChatsSectionEnabled: s.pinnedChatsSectionEnabled,
         initialPinsVisible: s.initialPinsVisible,
         maxPins: s.maxPins,
         initialPinnedChatsVisible: s.initialPinnedChatsVisible,
@@ -263,17 +277,17 @@ const App = () => {
   );
 
   const save = useCallback(
-    (key: keyof FormValues, value: number) => {
+    (key: keyof FormValues, value: number | boolean) => {
       storage.set(key, value);
 
-      if (key === "maxPins") {
+      if (key === "maxPins" && typeof value === "number") {
         const visible = getValues("initialPinsVisible");
         if (visible > value) {
           setValue("initialPinsVisible", value);
           storage.set("initialPinsVisible", value);
         }
       }
-      if (key === "maxPinnedChats") {
+      if (key === "maxPinnedChats" && typeof value === "number") {
         const visible = getValues("initialPinnedChatsVisible");
         if (visible > value) {
           setValue("initialPinnedChatsVisible", value);
@@ -310,10 +324,31 @@ const App = () => {
           </Text>
         </Box>
 
+        <Text size="1" color="gray" mb="2" asChild>
+          <p>
+            Existing pins and favourites are preserved when a section is hidden.
+          </p>
+        </Text>
+
         <Flex direction="column" gap="3">
-          <Text size="2" weight="bold" color="gray">
-            Pinned Replies
-          </Text>
+          <Flex align="center" justify="between">
+            <Text size="2" weight="bold" color="gray">
+              Pinned Replies
+            </Text>
+            <Controller
+              name="pinsSectionEnabled"
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={(v) => {
+                    field.onChange(v);
+                    save("pinsSectionEnabled", v);
+                  }}
+                />
+              )}
+            />
+          </Flex>
 
           <Flex align="center" justify="between">
             <Text size="2">Initially visible</Text>
@@ -333,6 +368,7 @@ const App = () => {
                   max={maxPins}
                   minMessage="Minimum is 1"
                   maxMessage={`Can't exceed maximum (${maxPins})`}
+                  disabled={!pinsSectionEnabled}
                 />
               )}
             />
@@ -360,6 +396,7 @@ const App = () => {
                       : "Minimum is 1"
                   }
                   maxMessage={`Can't exceed ${ABSOLUTE_MAX}`}
+                  disabled={!pinsSectionEnabled}
                 />
               )}
             />
@@ -367,9 +404,24 @@ const App = () => {
 
           <Separator size="4" />
 
-          <Text size="2" weight="bold" color="gray">
-            Favourites
-          </Text>
+          <Flex align="center" justify="between">
+            <Text size="2" weight="bold" color="gray">
+              Favourites
+            </Text>
+            <Controller
+              name="pinnedChatsSectionEnabled"
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={(v) => {
+                    field.onChange(v);
+                    save("pinnedChatsSectionEnabled", v);
+                  }}
+                />
+              )}
+            />
+          </Flex>
 
           <Flex align="center" justify="between">
             <Text size="2">Initially visible</Text>
@@ -389,6 +441,7 @@ const App = () => {
                   max={maxPinnedChats}
                   minMessage="Minimum is 1"
                   maxMessage={`Can't exceed maximum (${maxPinnedChats})`}
+                  disabled={!pinnedChatsSectionEnabled}
                 />
               )}
             />
@@ -416,6 +469,7 @@ const App = () => {
                       : "Minimum is 1"
                   }
                   maxMessage={`Can't exceed ${ABSOLUTE_MAX}`}
+                  disabled={!pinnedChatsSectionEnabled}
                 />
               )}
             />

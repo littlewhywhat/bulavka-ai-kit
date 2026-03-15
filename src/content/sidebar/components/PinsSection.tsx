@@ -249,9 +249,11 @@ const PinsSection = () => {
   const [expanded, setExpanded] = useState(false);
   const [collapsed, setCollapsed] = useCollapsed("bulavka-pins-collapsed");
   const initialVisible = useSettingsValue("initialPinsVisible", 3);
+  const sectionEnabled = useSettingsValue("pinsSectionEnabled", true);
 
   useEffect(() => onPinsChange(setPins), []);
 
+  if (!sectionEnabled) return null;
   if (pins.length === 0) return null;
 
   const visible = expanded ? pins : pins.slice(0, initialVisible);
