@@ -4,4 +4,3 @@ release/
 .DS_Store
 *.log
 .env
-.env
