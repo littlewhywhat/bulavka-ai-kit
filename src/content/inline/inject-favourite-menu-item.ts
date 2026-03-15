@@ -30,7 +30,9 @@ const getConversationId = (trigger: Element): string | null =>
 
 const getChatTitle = (trigger: Element): string => {
   const anchor = trigger.closest("a[data-sidebar-item]");
-  return (anchor?.querySelector(".truncate")?.textContent?.trim() || "Untitled").slice(0, 40);
+  return (
+    anchor?.querySelector(".truncate")?.textContent?.trim() || "Untitled"
+  ).slice(0, 40);
 };
 
 const createSvg = (isFav: boolean): SVGSVGElement => {

@@ -329,7 +329,7 @@ const App = () => {
         <Text size="1" color="gray" mb="2" asChild>
           <p>
             Existing pins and favourites are preserved when a section is hidden.
-{` High limits may affect browser storage, therefore only max of ${ABSOLUTE_MAX} replies and chats is allowed.`}
+            {` High limits may affect browser storage, therefore only max of ${ABSOLUTE_MAX} replies and chats is allowed.`}
           </p>
         </Text>
 

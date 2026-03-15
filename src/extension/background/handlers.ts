@@ -1,4 +1,5 @@
 import type { Pin, PinnedChat } from "../../types/messages";
+import { sendFavouriteChat, sendPinMessage } from "../analytics/ping";
 import { onBackgroundMessage, sendToTab } from "../shared/messaging";
 import { storage } from "../shared/storage";
 
@@ -56,6 +57,7 @@ const registerHandlers = () => {
     );
     filtered.unshift(pin);
     await writePins(filtered.slice(0, maxPins));
+    sendPinMessage(true);
     return undefined;
   });
 
@@ -66,6 +68,7 @@ const registerHandlers = () => {
         !(p.conversationId === conversationId && p.messageId === messageId),
     );
     await writePins(filtered);
+    sendPinMessage(false);
     return undefined;
   });
 
@@ -100,6 +103,7 @@ const registerHandlers = () => {
     );
     filtered.unshift(chat);
     await writePinnedChats(filtered.slice(0, maxPinnedChats));
+    sendFavouriteChat(true);
     return undefined;
   });
 
@@ -107,6 +111,7 @@ const registerHandlers = () => {
     const chats = await readPinnedChats();
     const filtered = chats.filter((c) => c.conversationId !== conversationId);
     await writePinnedChats(filtered);
+    sendFavouriteChat(false);
     return undefined;
   });
 

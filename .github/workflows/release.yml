@@ -25,6 +25,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm build
+        env:
+          VITE_ANALYTICS_ENDPOINT: https://analytics.sidethreadgpt.com/api/extension-events
 
       - name: Rename zip with version
         run: mv release/release.zip release/${{ github.ref_name }}.zip
