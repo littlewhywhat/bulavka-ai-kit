@@ -26,7 +26,7 @@ jobs:
 
       - run: pnpm build
         env:
-          VITE_ANALYTICS_ENDPOINT: https://analytics.sidethreadgpt.com/api/extension-events
+          VITE_ANALYTICS_ENDPOINT: https://sidethreadgpt.com/api/extension-events
           VITE_PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
 
       - name: Rename zip with version
