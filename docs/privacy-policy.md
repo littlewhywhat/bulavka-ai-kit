@@ -6,7 +6,7 @@ Bulavka AI Kit ("the Extension") is a browser extension that adds favouriting an
 
 ## 1. Open Source
 
-The Extension is open source. You can review the full source code at **https://github.com/littlewhywhat/bulavka-ai-kit**.
+The Extension is open source. The source code is publicly available for review.
 
 ## 2. Data Stored Locally
 
@@ -22,7 +22,7 @@ The Extension collects anonymous analytics to understand how the product is used
 - Feature usage events: pin/unpin reply, favourite/unfavourite chat, toggle section visibility
 - Periodic heartbeat pings to measure active usage
 
-Analytics data is sent to our server over HTTPS. You can verify exactly what is sent by reading the source code at https://github.com/littlewhywhat/bulavka-ai-kit.
+Analytics data is sent to our server over HTTPS. You can verify exactly what is sent by reviewing the source code.
 
 ## 4. What We Do Not Collect
 
