@@ -1,5 +1,7 @@
+import { getAnalyticsBase, getProjectToken } from "./endpoint";
 import { sendLifecycleEvent, sendUserAction } from "./ping";
 import { analyticsStorage } from "./storage";
+import type { AnalyticsStorageSchema } from "./types";
 
 const HEARTBEAT_ALARM = "heartbeat";
 const HEARTBEAT_MINUTES = 360;
@@ -14,6 +16,38 @@ const TOGGLE_TO_ACTION = {
     off: "disable_favourites_chats",
   },
 } as const;
+
+const buildUninstallUrl = (stored: Partial<AnalyticsStorageSchema>): string => {
+  const manifest = chrome.runtime.getManifest();
+  const ua = navigator.userAgent;
+  const browserMatch = ua.match(/(Chrome|Firefox|Safari)\/(\d+)/);
+  const params = new URLSearchParams({
+    project_token: getProjectToken(),
+    uuid: stored.uuid ?? "",
+    current_version: manifest.version,
+    installed_at: String(stored.installed_at ?? 0),
+    installed_version: stored.installed_version ?? "",
+    updated_at: String(stored.updated_at ?? 0),
+    updated_version: stored.updated_version ?? "",
+    update_url: manifest.update_url ?? "",
+    last_pinged_at: String(stored.last_pinged_at ?? ""),
+    last_startup_at: String(stored.last_startup_at ?? ""),
+    ping_sequence: String(stored.ping_sequence ?? 0),
+    is_webdriver: String(navigator.webdriver ?? false),
+    is_headless: String(ua.includes("HeadlessChrome")),
+    browser: browserMatch?.[0] ?? "unknown",
+    platform: navigator.platform,
+    language: navigator.language,
+  });
+  return `${getAnalyticsBase()}/uninstall?${params.toString()}`;
+};
+
+const setupUninstallUrl = async (): Promise<void> => {
+  const stored = await analyticsStorage.get();
+  if (stored?.uuid == null) return;
+  const url = buildUninstallUrl(stored);
+  chrome.runtime.setUninstallURL(url);
+};
 
 const setupAlarm = (): void => {
   chrome.alarms.get(HEARTBEAT_ALARM, (existing) => {
@@ -39,6 +73,7 @@ const onInstalled = async (reason: string): Promise<void> => {
       ping_sequence: 0,
     });
     sendLifecycleEvent("install");
+    setupUninstallUrl();
   }
 
   if (reason === "update") {
@@ -59,6 +94,7 @@ const onInstalled = async (reason: string): Promise<void> => {
       });
     }
     sendLifecycleEvent("update");
+    setupUninstallUrl();
   }
 
   setupAlarm();
@@ -71,6 +107,7 @@ const onStartup = async (): Promise<void> => {
 const onAlarm = async (alarm: chrome.alarms.Alarm): Promise<void> => {
   if (alarm.name !== HEARTBEAT_ALARM) return;
   await sendLifecycleEvent("ping");
+  setupUninstallUrl();
 };
 
 const onStorageChange = (

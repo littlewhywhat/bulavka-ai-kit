@@ -54,6 +54,9 @@ type UserActionPayload = CommonFields & {
   action: UserAction;
 };
 
+type UninstallPayload = Omit<CommonFields, "timestamp"> &
+  LifecycleFields & { event_type: "uninstall" };
+
 type ExtensionEventPayload =
   | PingPayload
   | InstallPayload
@@ -64,7 +67,9 @@ export type {
   AnalyticsStorageSchema,
   ExtensionEventPayload,
   InstallPayload,
+  LifecycleFields,
   PingPayload,
+  UninstallPayload,
   UpdatePayload,
   UserAction,
   UserActionPayload,
