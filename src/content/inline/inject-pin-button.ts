@@ -6,7 +6,7 @@ import { PinButton } from "./components/PinButton";
 
 const ADDED_ATTR = "data-cgpt-pin-added";
 const SELECTOR =
-  'article[data-turn="assistant"] > div > div > div.justify-start > div';
+  'section[data-turn="assistant"] > div > div > div.justify-start > div';
 
 const initPinButtons = () =>
   observe({

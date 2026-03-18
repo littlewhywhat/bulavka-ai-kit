@@ -10,20 +10,20 @@ type PinButtonProps = {
 };
 
 const resolveMessageId = (btn: HTMLElement): string | undefined => {
-  const article = btn.closest("article");
-  if (!article) return undefined;
+  const section = btn.closest("section");
+  if (!section) return undefined;
   const nearest = btn.closest("div[data-message-id]");
-  if (nearest && article.contains(nearest))
+  if (nearest && section.contains(nearest))
     return nearest.getAttribute("data-message-id") ?? undefined;
-  const any = article.querySelector("div[data-message-id]");
+  const any = section.querySelector("div[data-message-id]");
   return any?.getAttribute("data-message-id") ?? undefined;
 };
 
 const extractPreview = (btn: HTMLElement): string => {
-  const article = btn.closest("article");
-  if (!article) return "";
-  const msgEl = article.querySelector("div[data-message-id]");
-  const text = (msgEl ?? article).textContent ?? "";
+  const section = btn.closest("section");
+  if (!section) return "";
+  const msgEl = section.querySelector("div[data-message-id]");
+  const text = (msgEl ?? section).textContent ?? "";
   return text
     .trim()
     .replace(/^ChatGPT\s*(said)?:?\s*/i, "")
