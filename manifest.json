@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Bulavka AI Kit — favourite & pin ChatGPT chats and replies",
+  "name": "Bulavka AI Kit: favourite & pin ChatGPT chats and replies",
   "version": "1.2.1",
   "description": "Favourite ChatGPT chats for quick sidebar access. Pin exact GPT replies to revisit your best moments without re-explaining yourself.",
   "icons": {
