@@ -2,11 +2,9 @@ import {
   Box,
   Flex,
   Heading,
-  IconButton,
   Separator,
   Switch,
   Text,
-  TextField,
   Theme,
   Tooltip,
 } from "@radix-ui/themes";
@@ -14,45 +12,11 @@ import { Info } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { storage } from "../extension/shared/storage";
+import { useColorScheme } from "./hooks/useColorScheme";
+import { NumberStepper } from "./components/NumberStepper";
+import { readCounts } from "./utils";
 
 const ABSOLUTE_MAX = 25;
-const PINS_KEY = "bulavka-ai-kit-pins";
-const CHATS_KEY = "bulavka-ai-kit-pinned-chats";
-
-const useColorScheme = (): "dark" | "light" => {
-  const [dark, setDark] = useState(
-    () => window.matchMedia("(prefers-color-scheme: dark)").matches,
-  );
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => setDark(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  return dark ? "dark" : "light";
-};
-
-const parseStoredCount = (raw: unknown): number => {
-  if (!raw || typeof raw !== "string") return 0;
-  try {
-    return (JSON.parse(raw) as unknown[]).length;
-  } catch {
-    return 0;
-  }
-};
-
-const readCounts = async () => {
-  const [pinsResult, chatsResult] = await Promise.all([
-    chrome.storage.sync.get(PINS_KEY),
-    chrome.storage.sync.get(CHATS_KEY),
-  ]);
-  return {
-    pinCount: parseStoredCount(pinsResult[PINS_KEY]),
-    chatCount: parseStoredCount(chatsResult[CHATS_KEY]),
-  };
-};
 
 type FormValues = {
   pinsSectionEnabled: boolean;
@@ -61,152 +25,6 @@ type FormValues = {
   maxPins: number;
   initialPinnedChatsVisible: number;
   maxPinnedChats: number;
-};
-
-type NumberStepperProps = {
-  value: number;
-  onChange: (v: number) => void;
-  onBlur: () => void;
-  onBoundary: (msg: string) => void;
-  min: number;
-  max: number;
-  minMessage: string;
-  maxMessage: string;
-  disabled?: boolean;
-};
-
-const MinusSvg = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    aria-hidden="true"
-  >
-    <path d="M5 12h14" />
-  </svg>
-);
-
-const PlusSvg = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    aria-hidden="true"
-  >
-    <path d="M12 5v14" />
-    <path d="M5 12h14" />
-  </svg>
-);
-
-const NumberStepper = ({
-  value,
-  onChange,
-  onBlur,
-  onBoundary,
-  min,
-  max,
-  minMessage,
-  maxMessage,
-  disabled,
-}: NumberStepperProps) => {
-  const [display, setDisplay] = useState(String(value));
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    setDisplay(String(value));
-    setError(false);
-  }, [value]);
-
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    setDisplay(raw);
-
-    if (raw === "") {
-      setError(true);
-      return;
-    }
-
-    const n = Number.parseInt(raw, 10);
-    if (Number.isNaN(n) || String(n) !== raw) {
-      setError(true);
-      return;
-    }
-
-    if (n < min) {
-      setError(true);
-      onBoundary(minMessage);
-      return;
-    }
-    if (n > max) {
-      setError(true);
-      onBoundary(maxMessage);
-      return;
-    }
-
-    setError(false);
-    onChange(n);
-  };
-
-  const handleBlur = () => {
-    setDisplay(String(value));
-    setError(false);
-    onBlur();
-  };
-
-  const step = (delta: number) => {
-    const next = value + delta;
-    if (next < min) {
-      onBoundary(minMessage);
-      return;
-    }
-    if (next > max) {
-      onBoundary(maxMessage);
-      return;
-    }
-    onChange(next);
-  };
-
-  return (
-    <Flex align="stretch" gap="1">
-      <TextField.Root
-        value={display}
-        onChange={handleInput}
-        onBlur={handleBlur}
-        color={error ? "red" : undefined}
-        style={{ width: 56, textAlign: "center" }}
-        size="2"
-        disabled={disabled}
-      />
-      <IconButton
-        size="2"
-        variant="soft"
-        color="gray"
-        type="button"
-        onClick={() => step(-1)}
-        disabled={disabled}
-      >
-        <MinusSvg />
-      </IconButton>
-      <IconButton
-        size="2"
-        variant="soft"
-        color="gray"
-        type="button"
-        onClick={() => step(1)}
-        disabled={disabled}
-      >
-        <PlusSvg />
-      </IconButton>
-    </Flex>
-  );
 };
 
 const DEFAULT_STATUS = "Adjust pin and favourite limits";
