@@ -11,9 +11,10 @@ import {
 import { Info } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { sendMessage } from "../extension/shared/messaging";
 import { storage } from "../extension/shared/storage";
-import { useColorScheme } from "./hooks/useColorScheme";
 import { NumberStepper } from "./components/NumberStepper";
+import { useColorScheme } from "./hooks/useColorScheme";
 import { readCounts } from "./utils";
 
 const ABSOLUTE_MAX = 25;
@@ -175,6 +176,11 @@ const App = () => {
                     onCheckedChange={(v) => {
                       field.onChange(v);
                       save("pinnedChatsSectionEnabled", v);
+                      void sendMessage("analytics-user-action", {
+                        action: v
+                          ? "enable_favourites_chats"
+                          : "disable_favourites_chats",
+                      }).catch(() => {});
                     }}
                   />
                 </Theme>
@@ -259,6 +265,11 @@ const App = () => {
                     onCheckedChange={(v) => {
                       field.onChange(v);
                       save("pinsSectionEnabled", v);
+                      void sendMessage("analytics-user-action", {
+                        action: v
+                          ? "enable_pin_replies"
+                          : "disable_pin_replies",
+                      }).catch(() => {});
                     }}
                   />
                 </Theme>

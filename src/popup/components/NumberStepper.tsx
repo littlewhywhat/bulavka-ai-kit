@@ -1,6 +1,5 @@
+import { Flex, IconButton, TextField } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
-import { Flex } from "@radix-ui/themes";
-import { TextField, IconButton } from "@radix-ui/themes";
 import { MinusSvg, PlusSvg } from "../icons";
 
 type NumberStepperProps = {

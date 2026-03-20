@@ -1,21 +1,10 @@
 import { getAnalyticsBase, getProjectToken } from "./endpoint";
-import { sendLifecycleEvent, sendUserAction } from "./ping";
+import { sendLifecycleEvent } from "./ping";
 import { analyticsStorage } from "./storage";
 import type { AnalyticsStorageSchema } from "./types";
 
 const HEARTBEAT_ALARM = "heartbeat";
 const HEARTBEAT_MINUTES = 360;
-
-const TOGGLE_TO_ACTION = {
-  pinsSectionEnabled: {
-    on: "enable_pin_replies",
-    off: "disable_pin_replies",
-  },
-  pinnedChatsSectionEnabled: {
-    on: "enable_favourites_chats",
-    off: "disable_favourites_chats",
-  },
-} as const;
 
 const buildUninstallUrl = (stored: Partial<AnalyticsStorageSchema>): string => {
   const manifest = chrome.runtime.getManifest();
@@ -110,21 +99,6 @@ const onAlarm = async (alarm: chrome.alarms.Alarm): Promise<void> => {
   setupUninstallUrl();
 };
 
-const onStorageChange = (
-  changes: { [key: string]: chrome.storage.StorageChange },
-  areaName: string,
-): void => {
-  if (areaName !== "local") return;
-
-  for (const [key, change] of Object.entries(changes)) {
-    const mapping = TOGGLE_TO_ACTION[key as keyof typeof TOGGLE_TO_ACTION];
-    if (mapping != null && change?.newValue !== undefined) {
-      const action = change.newValue ? mapping.on : mapping.off;
-      sendUserAction(action);
-    }
-  }
-};
-
 const registerAnalytics = (): void => {
   chrome.runtime.onInstalled.addListener(({ reason }) => {
     onInstalled(reason);
@@ -137,8 +111,6 @@ const registerAnalytics = (): void => {
   chrome.alarms.onAlarm.addListener((alarm) => {
     onAlarm(alarm);
   });
-
-  chrome.storage.onChanged.addListener(onStorageChange);
 };
 
 export { registerAnalytics };

@@ -43,6 +43,11 @@ const writePinnedChats = async (chats: PinnedChat[]): Promise<void> => {
 };
 
 const registerHandlers = () => {
+  onBackgroundMessage("analytics-user-action", async ({ action }) => {
+    await sendUserAction(action);
+    return undefined;
+  });
+
   onBackgroundMessage("pins-get", async () => readPins());
 
   onBackgroundMessage("pins-add", async (pin) => {

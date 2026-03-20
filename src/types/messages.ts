@@ -1,3 +1,5 @@
+import type { UserAction } from "../extension/analytics/types";
+
 type Pin = {
   conversationId: string;
   messageId: string;
@@ -54,6 +56,10 @@ type BackgroundMessages = {
   };
   "request-show-unfavourite-modal": {
     request: PinnedChat;
+    response: undefined;
+  };
+  "analytics-user-action": {
+    request: { action: UserAction };
     response: undefined;
   };
 };
