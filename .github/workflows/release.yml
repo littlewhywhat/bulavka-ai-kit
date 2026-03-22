@@ -30,9 +30,8 @@ jobs:
           VITE_ANALYTICS_BASE: https://sidethreadgpt.com
           VITE_PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
 
-      - name: Rename zip with version
-        run: mv release/release.zip release/${{ github.ref_name }}.zip
+      - run: mv release/release.zip "release/${{ github.event.repository.name }}-${{ github.ref_name }}-${GITHUB_SHA:0:7}.zip"
 
       - uses: softprops/action-gh-release@v2
         with:
-          files: release/${{ github.ref_name }}.zip
+          files: release/${{ github.event.repository.name }}-${{ github.ref_name }}-${GITHUB_SHA:0:7}.zip
