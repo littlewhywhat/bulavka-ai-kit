@@ -1,290 +1,174 @@
 /** @jsxImportSource preact */
-import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+
+import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { useEffect, useState } from "preact/hooks";
 import type { PinnedChat } from "../../../types/messages";
+import { getPinnedChats, onPinnedChatsChange } from "../../pinnedChatsStorage";
+import { createFolder, getFolders, onFoldersChange } from "../foldersStorage";
+import { moveNode } from "../treeMutations";
 import {
-  getPinnedChats,
-  onPinnedChatsChange,
-  requestUnfavourite,
-  updatePinnedChatTitle,
-} from "../../pinnedChatsStorage";
-import { navigateToPath } from "../../utils/navigate";
+  addFolderToTree,
+  getTree,
+  onTreeChange,
+  reconcile,
+  saveTree,
+} from "../treeStorage";
+import type { FoldersMap, TreeNode } from "../types";
 import { useCollapsed } from "../useCollapsed";
 import { useSettingsValue } from "../useSettingsValue";
-
-type PinnedChatItemProps = {
-  chat: PinnedChat;
-  onUnpinClick: (chat: PinnedChat) => void;
-};
-
-const PinnedChatItem = ({ chat, onUnpinClick }: PinnedChatItemProps) => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState({ left: 0, top: 0 });
-  const [renaming, setRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState(chat.title);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const menuBtnRef = useRef<HTMLButtonElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node))
-        setMenuOpen(false);
-    };
-    document.addEventListener("click", handler, true);
-    return () => document.removeEventListener("click", handler, true);
-  }, [menuOpen]);
-
-  useEffect(() => {
-    if (renaming && inputRef.current) inputRef.current.focus();
-  }, [renaming]);
-
-  const commitRename = useCallback(() => {
-    const trimmed = renameValue.trim();
-    if (trimmed && trimmed !== chat.title) {
-      updatePinnedChatTitle(chat.conversationId, trimmed);
-    }
-    setRenaming(false);
-  }, [renameValue, chat]);
-
-  const handleMenuClick = (e: MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!menuOpen && menuBtnRef.current) {
-      const rect = menuBtnRef.current.getBoundingClientRect();
-      setMenuPos({ left: rect.left, top: rect.bottom + 4 });
-    }
-    setMenuOpen((v) => !v);
-  };
-
-  const handleStartRename = (e: MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setMenuOpen(false);
-    setRenameValue(chat.title);
-    setRenaming(true);
-  };
-
-  const handleInputKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      commitRename();
-    }
-    if (e.key === "Escape") {
-      e.preventDefault();
-      setRenaming(false);
-    }
-  };
-
-  const handleLinkClick = (e: MouseEvent) => {
-    if (renaming) {
-      e.preventDefault();
-      return;
-    }
-    e.preventDefault();
-    navigateToPath(`/c/${chat.conversationId}`);
-  };
-
-  return (
-    <a
-      tabIndex={0}
-      data-fill=""
-      class="group __menu-item hoverable"
-      data-sidebar-item="true"
-      href={`/c/${chat.conversationId}`}
-      data-discover="true"
-      onClick={handleLinkClick}
-    >
-      <div class="flex min-w-0 grow items-center gap-2.5">
-        {renaming ? (
-          <input
-            ref={inputRef}
-            class="w-full border-none bg-transparent p-0 text-sm focus:ring-0"
-            type="text"
-            value={renameValue}
-            name="title-editor"
-            onInput={(e: Event) =>
-              setRenameValue((e.target as HTMLInputElement).value)
-            }
-            onBlur={commitRename}
-            onKeyDown={handleInputKeyDown}
-            onClick={(e: MouseEvent) => e.preventDefault()}
-          />
-        ) : (
-          <div class="truncate">{chat.title || "Untitled chat"}</div>
-        )}
-      </div>
-      <div class="trailing-pair">
-        <div class="trailing highlight text-token-text-tertiary">
-          <button
-            ref={menuBtnRef}
-            tabIndex={0}
-            data-trailing-button=""
-            class="__menu-item-trailing-btn"
-            type="button"
-            onClick={handleMenuClick}
-          >
-            <div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                aria-hidden="true"
-                class="icon"
-              >
-                <use
-                  href="/cdn/assets/sprites-core-fk4oovux.svg#f6d0e2"
-                  fill="currentColor"
-                />
-              </svg>
-            </div>
-          </button>
-        </div>
-        <div class="trailing text-token-text-tertiary" tabIndex={-1} />
-        {menuOpen && (
-          <div
-            ref={menuRef}
-            role="menu"
-            aria-orientation="vertical"
-            onMouseLeave={() => setMenuOpen(false)}
-            class="z-50 flex flex-col max-w-xs rounded-2xl popover bg-token-main-surface-primary dark:bg-[#353535] shadow-long py-1.5 px-1.5"
-            tabIndex={-1}
-            style={{
-              position: "fixed",
-              left: `${menuPos.left}px`,
-              top: `${menuPos.top}px`,
-              zIndex: 50,
-              minWidth: "max-content",
-              outline: "none",
-            }}
-          >
-            <div
-              role="menuitem"
-              tabIndex={0}
-              class="group __menu-item hoverable gap-1.5 w-full"
-              onClick={handleStartRename}
-              onKeyDown={(e: KeyboardEvent) => {
-                if (e.key === "Enter")
-                  handleStartRename(e as unknown as MouseEvent);
-              }}
-            >
-              <div class="flex items-center justify-center group-disabled:opacity-50 group-data-disabled:opacity-50 icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  aria-hidden="true"
-                  class="icon"
-                >
-                  <use
-                    href="/cdn/assets/sprites-core-fk4oovux.svg#6d87e1"
-                    fill="currentColor"
-                  />
-                </svg>
-              </div>
-              Rename
-            </div>
-            <div
-              role="menuitem"
-              tabIndex={0}
-              data-color="danger"
-              class="group __menu-item hoverable gap-1.5 w-full"
-              onClick={(e: MouseEvent) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setMenuOpen(false);
-                onUnpinClick(chat);
-              }}
-              onKeyDown={(e: KeyboardEvent) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  setMenuOpen(false);
-                  onUnpinClick(chat);
-                }
-              }}
-            >
-              <div class="flex items-center justify-center group-disabled:opacity-50 group-data-disabled:opacity-50 icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                  class="icon"
-                >
-                  <path d="m10.344 4.688 1.181-2.393a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.237 3.152" />
-                  <path d="m17.945 17.945.43 2.505a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a8 8 0 0 0 .4-.099" />
-                  <path d="m2 2 20 20" />
-                </svg>
-              </div>
-              Unfavourite
-            </div>
-          </div>
-        )}
-      </div>
-    </a>
-  );
-};
+import { FolderRow } from "./FolderRow";
+import { PinnedChatItem } from "./PinnedChatItem";
 
 const PinnedChatsSection = () => {
   const [chats, setChats] = useState<PinnedChat[]>(getPinnedChats);
+  const [tree, setTree] = useState<TreeNode[]>(getTree);
+  const [folders, setFolders] = useState<FoldersMap>(getFolders);
   const [expanded, setExpanded] = useState(false);
   const [collapsed, setCollapsed] = useCollapsed(
     "bulavka-favourites-collapsed",
   );
   const initialVisible = useSettingsValue("initialPinnedChatsVisible", 3);
   const sectionEnabled = useSettingsValue("pinnedChatsSectionEnabled", true);
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
 
-  useEffect(() => onPinnedChatsChange(setChats), []);
+  useEffect(() => {
+    const unsubChats = onPinnedChatsChange((newChats) => {
+      setChats(newChats);
+      reconcile(newChats.map((c) => c.conversationId));
+    });
+    const unsubTree = onTreeChange(setTree);
+    const unsubFolders = onFoldersChange(setFolders);
+    return () => {
+      unsubChats();
+      unsubTree();
+      unsubFolders();
+    };
+  }, []);
+
+  useEffect(() => {
+    const cleanup = monitorForElements({
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets[0];
+        if (!target) return;
+
+        const sourceData = source.data;
+        const targetData = target.data;
+
+        let position: "before" | "after" | "into";
+
+        if (targetData.targetType === "folder") {
+          position = targetData.dropAction as "before" | "after" | "into";
+        } else {
+          const edge = extractClosestEdge(targetData);
+          position = edge === "top" ? "before" : "after";
+        }
+
+        const currentTree = getTree();
+        const newTree = moveNode(currentTree, {
+          sourceType: sourceData.sourceType as "chat" | "folder",
+          sourceId: sourceData.sourceId as string,
+          targetType: targetData.targetType as "chat" | "folder",
+          targetId: targetData.targetId as string,
+          position,
+        });
+
+        if (newTree !== currentTree) {
+          saveTree(newTree);
+        }
+      },
+    });
+
+    return cleanup;
+  }, []);
 
   if (!sectionEnabled) return null;
   if (chats.length === 0) return null;
 
-  const visible = expanded ? chats : chats.slice(0, initialVisible);
-  const hasMore = chats.length > initialVisible;
+  const chatsMap = new Map(chats.map((c) => [c.conversationId, c]));
+  const rootItems = expanded ? tree : tree.slice(0, initialVisible);
+  const hasMore = tree.length > initialVisible;
+
+  const handleCreateFolder = async () => {
+    const folder = await createFolder("New folder");
+    await addFolderToTree(folder.id);
+    setRenamingFolderId(folder.id);
+  };
 
   return (
     <div class="group/sidebar-expando-section mb-[var(--sidebar-expanded-section-margin-bottom)]">
-      <button
-        type="button"
-        aria-expanded={!collapsed}
-        class="text-token-text-tertiary flex w-full items-center justify-start gap-0.5 px-4 py-1.5"
-        onClick={() => setCollapsed((c) => !c)}
-      >
-        <h2 class="__menu-label" data-no-spacing="true">
-          Favourites
-        </h2>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          aria-hidden="true"
-          data-rtl-flip=""
-          class={
-            collapsed
-              ? "h-3 w-3 shrink-0"
-              : "invisible h-3 w-3 shrink-0 group-hover/sidebar-expando-section:visible"
-          }
+      <div class="flex w-full items-center justify-between px-4 py-1.5">
+        <button
+          type="button"
+          aria-expanded={!collapsed}
+          class="text-token-text-tertiary flex items-center gap-0.5"
+          onClick={() => setCollapsed((c) => !c)}
         >
-          <use
-            href={`/cdn/assets/sprites-core-fk4oovux.svg#${collapsed ? "d3876b" : "ba3792"}`}
-            fill="currentColor"
-          />
-        </svg>
-      </button>
+          <h2 class="__menu-label" data-no-spacing="true">
+            Favourites
+          </h2>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            aria-hidden="true"
+            data-rtl-flip=""
+            class={
+              collapsed
+                ? "h-3 w-3 shrink-0"
+                : "invisible h-3 w-3 shrink-0 group-hover/sidebar-expando-section:visible"
+            }
+          >
+            <use
+              href={`/cdn/assets/sprites-core-fk4oovux.svg#${collapsed ? "d3876b" : "ba3792"}`}
+              fill="currentColor"
+            />
+          </svg>
+        </button>
+        {!collapsed && (
+          <button
+            type="button"
+            class="text-token-text-tertiary invisible group-hover/sidebar-expando-section:visible"
+            onClick={handleCreateFolder}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14" />
+              <path d="M12 5v14" />
+            </svg>
+          </button>
+        )}
+      </div>
       {!collapsed &&
-        visible.map((chat) => (
-          <PinnedChatItem
-            key={chat.conversationId}
-            chat={chat}
-            onUnpinClick={(c) => requestUnfavourite(c)}
-          />
-        ))}
+        rootItems.map((node) => {
+          if (node.type === "chat") {
+            const chat = chatsMap.get(node.id);
+            if (!chat) return null;
+            return <PinnedChatItem key={node.id} chat={chat} />;
+          }
+          const folder = folders[node.id];
+          if (!folder) return null;
+          return (
+            <FolderRow
+              key={node.id}
+              folder={folder}
+              childNodes={node.children}
+              chatsMap={chatsMap}
+              autoRename={renamingFolderId === node.id}
+              onRenameComplete={() => setRenamingFolderId(null)}
+            />
+          );
+        })}
       {!collapsed && hasMore && (
         <button
           type="button"
