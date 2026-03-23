@@ -164,8 +164,11 @@ const PinnedChatsSection = () => {
               folder={folder}
               childNodes={node.children}
               chatsMap={chatsMap}
+              folders={folders}
+              depth={0}
               autoRename={renamingFolderId === node.id}
               onRenameComplete={() => setRenamingFolderId(null)}
+              renamingFolderId={renamingFolderId}
             />
           );
         })}

@@ -10,7 +10,7 @@ type ChatNode = { type: "chat"; id: string };
 type FolderNode = { type: "folder"; id: string; children: TreeNode[] };
 type TreeNode = ChatNode | FolderNode;
 
-const MAX_FOLDER_DEPTH = 2;
+const MAX_FOLDER_DEPTH = 3;
 
 export { MAX_FOLDER_DEPTH };
 export type { ChatNode, FolderMeta, FolderNode, FoldersMap, TreeNode };

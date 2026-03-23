@@ -10,24 +10,32 @@ import {
   renameFolder,
   toggleFolderCollapsed,
 } from "../foldersStorage";
+import { getFolderDepth } from "../treeMutations";
 import { removeFolderFromTree } from "../treeStorage";
-import type { FolderMeta, TreeNode } from "../types";
+import type { FolderMeta, FoldersMap, TreeNode } from "../types";
+import { MAX_FOLDER_DEPTH } from "../types";
 import { PinnedChatItem } from "./PinnedChatItem";
 
 type FolderRowProps = {
   folder: FolderMeta;
   childNodes: TreeNode[];
   chatsMap: Map<string, PinnedChat>;
+  folders: FoldersMap;
+  depth?: number;
   autoRename?: boolean;
   onRenameComplete?: () => void;
+  renamingFolderId?: string | null;
 };
 
 const FolderRow = ({
   folder,
   childNodes,
   chatsMap,
+  folders,
+  depth = 0,
   autoRename = false,
   onRenameComplete,
+  renamingFolderId = null,
 }: FolderRowProps) => {
   const headerRef = useRef<HTMLDivElement>(null);
   const [dropAction, setDropAction] = useState<
@@ -42,6 +50,12 @@ const FolderRow = ({
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const sourceFolderDepth = getFolderDepth({
+    type: "folder",
+    id: folder.id,
+    children: childNodes,
+  });
+
   useEffect(() => {
     const el = headerRef.current;
     if (!el) return;
@@ -51,6 +65,7 @@ const FolderRow = ({
       getInitialData: () => ({
         sourceType: "folder",
         sourceId: folder.id,
+        sourceFolderDepth,
       }),
       onDragStart: () => setIsDragging(true),
       onDrop: () => setIsDragging(false),
@@ -64,8 +79,13 @@ const FolderRow = ({
         const ratio = y / rect.height;
         const sourceIsFolder = source.data.sourceType === "folder";
 
+        const srcFolderDepth = sourceIsFolder
+          ? Number(source.data.sourceFolderDepth) || 1
+          : 0;
+        const canAcceptInto = depth + 1 + srcFolderDepth < MAX_FOLDER_DEPTH;
+
         let action: "before" | "after" | "into";
-        if (sourceIsFolder) {
+        if (sourceIsFolder && !canAcceptInto) {
           action = ratio < 0.5 ? "before" : "after";
         } else {
           if (ratio < 0.25) action = "before";
@@ -79,11 +99,18 @@ const FolderRow = ({
           dropAction: action,
         };
       },
-      canDrop: ({ source }) =>
-        !(
+      canDrop: ({ source }) => {
+        if (
           source.data.sourceType === "folder" &&
           source.data.sourceId === folder.id
-        ),
+        )
+          return false;
+        if (source.data.sourceType === "folder") {
+          const srcDepth = Number(source.data.sourceFolderDepth) || 1;
+          return depth + srcDepth < MAX_FOLDER_DEPTH;
+        }
+        return true;
+      },
       onDragEnter: ({ self }) =>
         setDropAction(self.data.dropAction as "before" | "after" | "into"),
       onDrag: ({ self }) =>
@@ -96,7 +123,7 @@ const FolderRow = ({
       cleanupDrag();
       cleanupDrop();
     };
-  }, [folder.id]);
+  }, [folder.id, depth, sourceFolderDepth]);
 
   useEffect(() => {
     if (autoRename) {
@@ -200,6 +227,7 @@ const FolderRow = ({
         }}
         style={{
           cursor: "pointer",
+          ...(depth > 0 ? { paddingLeft: `${depth * 20 + 8}px` } : {}),
           ...(isDragging ? { opacity: 0.5 } : {}),
           ...dropIndicatorStyle,
         }}
@@ -361,12 +389,33 @@ const FolderRow = ({
         </div>
       </div>
       {!folder.collapsed && (
-        <div class="pl-5">
+        <div style={{ paddingLeft: "20px" }}>
           {childNodes.map((child) => {
-            if (child.type !== "chat") return null;
-            const chat = chatsMap.get(child.id);
-            if (!chat) return null;
-            return <PinnedChatItem key={child.id} chat={chat} depth={1} />;
+            if (child.type === "chat") {
+              const chat = chatsMap.get(child.id);
+              if (!chat) return null;
+              return (
+                <PinnedChatItem key={child.id} chat={chat} depth={depth + 1} />
+              );
+            }
+            if (child.type === "folder") {
+              const childFolder = folders[child.id];
+              if (!childFolder) return null;
+              return (
+                <FolderRow
+                  key={child.id}
+                  folder={childFolder}
+                  childNodes={child.children}
+                  chatsMap={chatsMap}
+                  folders={folders}
+                  depth={depth + 1}
+                  autoRename={renamingFolderId === child.id}
+                  onRenameComplete={onRenameComplete}
+                  renamingFolderId={renamingFolderId}
+                />
+              );
+            }
+            return null;
           })}
         </div>
       )}

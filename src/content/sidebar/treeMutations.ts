@@ -1,4 +1,5 @@
 import type { TreeNode } from "./types";
+import { MAX_FOLDER_DEPTH } from "./types";
 
 type MoveInstruction = {
   sourceType: "chat" | "folder";
@@ -6,6 +7,60 @@ type MoveInstruction = {
   targetType: "chat" | "folder";
   targetId: string;
   position: "before" | "after" | "into";
+};
+
+const getFolderDepth = (node: TreeNode): number => {
+  if (node.type === "chat") return 0;
+  if (node.children.length === 0) return 1;
+  return 1 + Math.max(...node.children.map(getFolderDepth));
+};
+
+const findNodeDepth = (
+  nodes: TreeNode[],
+  type: string,
+  id: string,
+  depth = 0,
+): number => {
+  for (const node of nodes) {
+    if (node.type === type && node.id === id) return depth;
+    if (node.type === "folder") {
+      const d = findNodeDepth(node.children, type, id, depth + 1);
+      if (d !== -1) return d;
+    }
+  }
+  return -1;
+};
+
+const isDescendantOf = (
+  nodes: TreeNode[],
+  ancestorId: string,
+  targetType: string,
+  targetId: string,
+): boolean => {
+  for (const node of nodes) {
+    if (node.type === "folder" && node.id === ancestorId) {
+      return containsNode(node.children, targetType, targetId);
+    }
+    if (node.type === "folder") {
+      const found = isDescendantOf(
+        node.children,
+        ancestorId,
+        targetType,
+        targetId,
+      );
+      if (found) return found;
+    }
+  }
+  return false;
+};
+
+const containsNode = (nodes: TreeNode[], type: string, id: string): boolean => {
+  for (const node of nodes) {
+    if (node.type === type && node.id === id) return true;
+    if (node.type === "folder" && containsNode(node.children, type, id))
+      return true;
+  }
+  return false;
 };
 
 const findAndRemove = (
@@ -25,22 +80,15 @@ const findAndRemove = (
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i];
     if (node.type !== "folder") continue;
-    const childIdx = node.children.findIndex(
-      (c) => c.type === type && c.id === id,
-    );
-    if (childIdx === -1) continue;
-    const removed = node.children[childIdx];
-    const newChildren = [
-      ...node.children.slice(0, childIdx),
-      ...node.children.slice(childIdx + 1),
-    ];
+    const result = findAndRemove(node.children, type, id);
+    if (!result.removed) continue;
     return {
       nodes: [
         ...nodes.slice(0, i),
-        { ...node, children: newChildren },
+        { ...node, children: result.nodes },
         ...nodes.slice(i + 1),
       ],
-      removed,
+      removed: result.removed,
     };
   }
 
@@ -55,36 +103,42 @@ const insertAtTarget = (
   position: "before" | "after" | "into",
 ): TreeNode[] => {
   if (position === "into") {
-    return nodes.map((n) =>
-      n.type === "folder" && n.id === targetId
-        ? { ...n, children: [...n.children, toInsert] }
-        : n,
-    );
+    return nodes.map((n) => {
+      if (n.type === "folder" && n.id === targetId)
+        return { ...n, children: [...n.children, toInsert] };
+      if (n.type === "folder") {
+        const updated = insertAtTarget(
+          n.children,
+          toInsert,
+          targetType,
+          targetId,
+          position,
+        );
+        if (updated !== n.children) return { ...n, children: updated };
+      }
+      return n;
+    });
   }
 
-  const rootIdx = nodes.findIndex(
+  const idx = nodes.findIndex(
     (n) => n.type === targetType && n.id === targetId,
   );
-  if (rootIdx !== -1) {
-    const insertIdx = position === "before" ? rootIdx : rootIdx + 1;
+  if (idx !== -1) {
+    const insertIdx = position === "before" ? idx : idx + 1;
     return [...nodes.slice(0, insertIdx), toInsert, ...nodes.slice(insertIdx)];
   }
 
   return nodes.map((n) => {
     if (n.type !== "folder") return n;
-    const childIdx = n.children.findIndex(
-      (c) => c.type === targetType && c.id === targetId,
+    const updated = insertAtTarget(
+      n.children,
+      toInsert,
+      targetType,
+      targetId,
+      position,
     );
-    if (childIdx === -1) return n;
-    const insertIdx = position === "before" ? childIdx : childIdx + 1;
-    return {
-      ...n,
-      children: [
-        ...n.children.slice(0, insertIdx),
-        toInsert,
-        ...n.children.slice(insertIdx),
-      ],
-    };
+    if (updated !== n.children) return { ...n, children: updated };
+    return n;
   });
 };
 
@@ -95,20 +149,33 @@ const moveNode = (
   const { sourceType, sourceId, targetType, targetId, position } = instruction;
 
   if (sourceType === targetType && sourceId === targetId) return tree;
-  if (sourceType === "folder" && position === "into") return tree;
+
+  if (
+    sourceType === "folder" &&
+    isDescendantOf(tree, sourceId, targetType, targetId)
+  )
+    return tree;
+
+  const targetDepth = findNodeDepth(tree, targetType, targetId);
+  if (targetDepth === -1) return tree;
 
   if (sourceType === "folder") {
-    const targetAtRoot = tree.some(
-      (n) => n.type === targetType && n.id === targetId,
-    );
-    if (!targetAtRoot) return tree;
+    const sourceNode = tree
+      .flatMap(function flat(n): TreeNode[] {
+        if (n.type === "folder" && n.id === sourceId) return [n];
+        if (n.type === "folder") return n.children.flatMap(flat);
+        return [];
+      })
+      .at(0);
+    if (!sourceNode) return tree;
 
-    const folder = tree.find((n) => n.type === "folder" && n.id === sourceId);
-    if (
-      folder?.type === "folder" &&
-      folder.children.some((c) => c.id === targetId)
-    )
-      return tree;
+    const sourceFolderDepth = getFolderDepth(sourceNode);
+    const newDepth = position === "into" ? targetDepth + 1 : targetDepth;
+    if (newDepth + sourceFolderDepth >= MAX_FOLDER_DEPTH) return tree;
+  }
+
+  if (sourceType === "chat" && position === "into") {
+    if (targetType !== "folder") return tree;
   }
 
   const { nodes, removed } = findAndRemove(tree, sourceType, sourceId);
@@ -117,5 +184,5 @@ const moveNode = (
   return insertAtTarget(nodes, removed, targetType, targetId, position);
 };
 
-export { moveNode };
+export { getFolderDepth, moveNode };
 export type { MoveInstruction };

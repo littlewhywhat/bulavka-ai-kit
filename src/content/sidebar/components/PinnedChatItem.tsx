@@ -15,6 +15,7 @@ import {
   updatePinnedChatTitle,
 } from "../../pinnedChatsStorage";
 import { navigateToPath } from "../../utils/navigate";
+import { MAX_FOLDER_DEPTH } from "../types";
 
 type PinnedChatItemProps = {
   chat: PinnedChat;
@@ -54,6 +55,13 @@ const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
           { targetType: "chat", targetId: chat.conversationId },
           { input, element, allowedEdges: ["top", "bottom"] },
         ),
+      canDrop: ({ source }) => {
+        if (source.data.sourceType === "folder") {
+          const srcDepth = Number(source.data.sourceFolderDepth) || 1;
+          return depth + srcDepth < MAX_FOLDER_DEPTH;
+        }
+        return true;
+      },
       onDragEnter: ({ self }) =>
         setDropEdge(extractClosestEdge(self.data) as "top" | "bottom" | null),
       onDrag: ({ self }) =>
@@ -66,7 +74,7 @@ const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
       cleanupDrag();
       cleanupDrop();
     };
-  }, [chat.conversationId]);
+  }, [chat.conversationId, depth]);
 
   useEffect(() => {
     if (!menuOpen) return;

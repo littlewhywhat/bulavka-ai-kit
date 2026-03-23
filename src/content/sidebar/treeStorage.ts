@@ -37,8 +37,8 @@ const collectChatIds = (nodes: TreeNode[]): Set<string> => {
     if (node.type === "chat") {
       ids.add(node.id);
     } else {
-      for (const child of node.children) {
-        if (child.type === "chat") ids.add(child.id);
+      for (const id of collectChatIds(node.children)) {
+        ids.add(id);
       }
     }
   }
@@ -51,9 +51,7 @@ const pruneTree = (nodes: TreeNode[], validIds: Set<string>): TreeNode[] =>
       if (node.type === "chat") return validIds.has(node.id) ? node : null;
       return {
         ...node,
-        children: node.children.filter(
-          (c) => c.type === "folder" || validIds.has(c.id),
-        ),
+        children: pruneTree(node.children, validIds),
       };
     })
     .filter((n): n is TreeNode => n !== null);
@@ -81,15 +79,36 @@ const addFolderToTree = async (folderId: string): Promise<void> => {
   await saveTree([{ type: "folder", id: folderId, children: [] }, ...cached]);
 };
 
+const removeFolderNode = (
+  nodes: TreeNode[],
+  folderId: string,
+): TreeNode[] | null => {
+  const idx = nodes.findIndex((n) => n.type === "folder" && n.id === folderId);
+  if (idx !== -1) {
+    const folder = nodes[idx];
+    const children = folder.type === "folder" ? folder.children : [];
+    return [...nodes.slice(0, idx), ...children, ...nodes.slice(idx + 1)];
+  }
+
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    if (node.type !== "folder") continue;
+    const updated = removeFolderNode(node.children, folderId);
+    if (!updated) continue;
+    return [
+      ...nodes.slice(0, i),
+      { ...node, children: updated },
+      ...nodes.slice(i + 1),
+    ];
+  }
+
+  return null;
+};
+
 const removeFolderFromTree = async (folderId: string): Promise<void> => {
   await ensureLoaded();
-  const idx = cached.findIndex((n) => n.type === "folder" && n.id === folderId);
-  if (idx === -1) return;
-  const folder = cached[idx];
-  const children = folder.type === "folder" ? folder.children : [];
-  const tree = [...cached];
-  tree.splice(idx, 1, ...children);
-  await saveTree(tree);
+  const result = removeFolderNode(cached, folderId);
+  if (result) await saveTree(result);
 };
 
 const onTreeChange = (cb: Listener): (() => void) => {
