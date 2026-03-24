@@ -34,4 +34,4 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          files: release/${{ github.event.repository.name }}-${{ github.ref_name }}-${GITHUB_SHA:0:7}.zip
+          files: release/*.zip
