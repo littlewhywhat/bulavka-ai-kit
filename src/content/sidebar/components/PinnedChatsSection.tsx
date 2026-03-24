@@ -5,6 +5,7 @@ import { preventUnhandled } from "@atlaskit/pragmatic-drag-and-drop/prevent-unha
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { useEffect, useState } from "preact/hooks";
 import type { PinnedChat } from "../../../types/messages";
+import { getConversationIdFromUrl } from "../../utils/chatgpt";
 import { getPinnedChats, onPinnedChatsChange } from "../../pinnedChatsStorage";
 import { createFolder, getFolders, onFoldersChange } from "../foldersStorage";
 import { moveNode } from "../treeMutations";
@@ -32,6 +33,7 @@ const PinnedChatsSection = () => {
   const initialVisible = useSettingsValue("initialPinnedChatsVisible", 3);
   const sectionEnabled = useSettingsValue("pinnedChatsSectionEnabled", true);
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState(getConversationIdFromUrl);
 
   useEffect(() => {
     const unsubChats = onPinnedChatsChange((newChats) => {
@@ -45,6 +47,12 @@ const PinnedChatsSection = () => {
       unsubTree();
       unsubFolders();
     };
+  }, []);
+
+  useEffect(() => {
+    const updateActive = () => setActiveConversationId(getConversationIdFromUrl());
+    window.addEventListener("popstate", updateActive);
+    return () => window.removeEventListener("popstate", updateActive);
   }, []);
 
   useEffect(() => {
@@ -158,7 +166,7 @@ const PinnedChatsSection = () => {
           if (node.type === "chat") {
             const chat = chatsMap.get(node.id);
             if (!chat) return null;
-            return <PinnedChatItem key={node.id} chat={chat} />;
+            return <PinnedChatItem key={node.id} chat={chat} activeConversationId={activeConversationId} />;
           }
           const folder = folders[node.id];
           if (!folder) return null;
@@ -173,6 +181,7 @@ const PinnedChatsSection = () => {
               autoRename={renamingFolderId === node.id}
               onRenameComplete={() => setRenamingFolderId(null)}
               renamingFolderId={renamingFolderId}
+              activeConversationId={activeConversationId}
             />
           );
         })}

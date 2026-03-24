@@ -22,9 +22,10 @@ import { MAX_FOLDER_DEPTH } from "../types";
 type PinnedChatItemProps = {
   chat: PinnedChat;
   depth?: number;
+  activeConversationId?: string | null;
 };
 
-const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
+const PinnedChatItem = ({ chat, depth = 0, activeConversationId }: PinnedChatItemProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const [dropEdge, setDropEdge] = useState<"top" | "bottom" | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -160,6 +161,7 @@ const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
       ref={elementRef}
       tabIndex={0}
       data-fill=""
+      data-active={activeConversationId === chat.conversationId ? "" : undefined}
       class="group __menu-item hoverable"
       data-sidebar-item="true"
       onClick={handleLinkClick}

@@ -27,6 +27,7 @@ type FolderRowProps = {
   autoRename?: boolean;
   onRenameComplete?: () => void;
   renamingFolderId?: string | null;
+  activeConversationId?: string | null;
 };
 
 const FolderRow = ({
@@ -38,6 +39,7 @@ const FolderRow = ({
   autoRename = false,
   onRenameComplete,
   renamingFolderId = null,
+  activeConversationId,
 }: FolderRowProps) => {
   const headerRef = useRef<HTMLDivElement>(null);
   const [dropAction, setDropAction] = useState<
@@ -547,7 +549,7 @@ const FolderRow = ({
               const chat = chatsMap.get(child.id);
               if (!chat) return null;
               return (
-                <PinnedChatItem key={child.id} chat={chat} depth={depth + 1} />
+                <PinnedChatItem key={child.id} chat={chat} depth={depth + 1} activeConversationId={activeConversationId} />
               );
             }
             if (child.type === "folder") {
@@ -564,6 +566,7 @@ const FolderRow = ({
                   autoRename={renamingFolderId === child.id}
                   onRenameComplete={onRenameComplete}
                   renamingFolderId={renamingFolderId}
+                  activeConversationId={activeConversationId}
                 />
               );
             }
