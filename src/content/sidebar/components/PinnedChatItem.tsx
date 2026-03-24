@@ -4,6 +4,8 @@ import {
   draggable,
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
+import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import {
   attachClosestEdge,
   extractClosestEdge,
@@ -23,7 +25,7 @@ type PinnedChatItemProps = {
 };
 
 const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
-  const elementRef = useRef<HTMLAnchorElement>(null);
+  const elementRef = useRef<HTMLDivElement>(null);
   const [dropEdge, setDropEdge] = useState<"top" | "bottom" | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -44,6 +46,23 @@ const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
         sourceType: "chat",
         sourceId: chat.conversationId,
       }),
+      onGenerateDragPreview: ({ nativeSetDragImage, location, source }) => {
+        setCustomNativeDragPreview({
+          nativeSetDragImage,
+          getOffset: preserveOffsetOnSource({
+            element: source.element,
+            input: location.current.input,
+          }),
+          render: ({ container }) => {
+            const clone = el.cloneNode(true) as HTMLElement;
+            clone.style.width = `${el.offsetWidth}px`;
+            clone.style.borderRadius = "10px";
+            clone.style.backgroundColor = "var(--bg-primary)";
+            clone.style.opacity = "0.9";
+            container.appendChild(clone);
+          },
+        });
+      },
       onDragStart: () => setIsDragging(true),
       onDrop: () => setIsDragging(false),
     });
@@ -136,28 +155,34 @@ const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
     navigateToPath(`/c/${chat.conversationId}`);
   };
 
-  const dropIndicatorStyle =
-    dropEdge === "top"
-      ? { boxShadow: "inset 0 2px 0 0 #2383e2" }
-      : dropEdge === "bottom"
-        ? { boxShadow: "inset 0 -2px 0 0 #2383e2" }
-        : {};
+  const showDropLine = dropEdge === "top" || dropEdge === "bottom";
 
   return (
-    <a
+    <div
       ref={elementRef}
       tabIndex={0}
       data-fill=""
       class="group __menu-item hoverable"
       data-sidebar-item="true"
-      href={`/c/${chat.conversationId}`}
-      data-discover="true"
       onClick={handleLinkClick}
       style={{
+        position: "relative",
         ...(isDragging ? { opacity: 0.5 } : {}),
-        ...dropIndicatorStyle,
       }}
     >
+      {showDropLine && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            height: "2px",
+            backgroundColor: "var(--text-accent)",
+            zIndex: 1,
+            ...(dropEdge === "top" ? { top: 0 } : { bottom: 0 }),
+          }}
+        />
+      )}
       <div class="flex min-w-0 grow items-center gap-2.5">
         {renaming ? (
           <input
@@ -290,7 +315,7 @@ const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
           </div>
         )}
       </div>
-    </a>
+    </div>
   );
 };
 

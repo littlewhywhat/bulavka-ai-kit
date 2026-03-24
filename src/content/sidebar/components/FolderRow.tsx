@@ -3,6 +3,8 @@ import {
   draggable,
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
+import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import type { PinnedChat } from "../../../types/messages";
 import {
@@ -69,6 +71,23 @@ const FolderRow = ({
         sourceId: folder.id,
         sourceFolderDepth,
       }),
+      onGenerateDragPreview: ({ nativeSetDragImage, location, source }) => {
+        setCustomNativeDragPreview({
+          nativeSetDragImage,
+          getOffset: preserveOffsetOnSource({
+            element: source.element,
+            input: location.current.input,
+          }),
+          render: ({ container }) => {
+            const clone = el.cloneNode(true) as HTMLElement;
+            clone.style.width = `${el.offsetWidth}px`;
+            clone.style.borderRadius = "10px";
+            clone.style.backgroundColor = "var(--bg-primary)";
+            clone.style.opacity = "0.9";
+            container.appendChild(clone);
+          },
+        });
+      },
       onDragStart: () => setIsDragging(true),
       onDrop: () => setIsDragging(false),
     });
@@ -208,16 +227,12 @@ const FolderRow = ({
   const itemCount = childNodes.filter((c) => c.type === "chat").length;
 
   const dropIndicatorStyle =
-    dropAction === "before"
-      ? { boxShadow: "inset 0 2px 0 0 #2383e2" }
-      : dropAction === "after"
-        ? { boxShadow: "inset 0 -2px 0 0 #2383e2" }
-        : dropAction === "into"
-          ? {
-              backgroundColor: "rgba(35, 131, 226, 0.08)",
-              borderRadius: "8px",
-            }
-          : {};
+    dropAction === "into"
+      ? {
+          backgroundColor: "color-mix(in srgb, var(--text-accent) 8%, transparent)",
+          borderRadius: "8px",
+        }
+      : {};
 
   return (
     <div>
@@ -240,10 +255,24 @@ const FolderRow = ({
         }}
         style={{
           cursor: "pointer",
+          position: "relative",
           ...(isDragging ? { opacity: 0.5 } : {}),
           ...dropIndicatorStyle,
         }}
       >
+        {(dropAction === "before" || dropAction === "after") && (
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              height: "2px",
+              backgroundColor: "var(--text-accent)",
+              zIndex: 1,
+              ...(dropAction === "before" ? { top: 0 } : { bottom: 0 }),
+            }}
+          />
+        )}
         <div class="flex min-w-0 grow items-center gap-1.5">
           {folder.collapsed && !hovered ? (
             <svg

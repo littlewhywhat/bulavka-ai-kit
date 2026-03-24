@@ -1,6 +1,7 @@
 /** @jsxImportSource preact */
 
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { preventUnhandled } from "@atlaskit/pragmatic-drag-and-drop/prevent-unhandled";
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { useEffect, useState } from "preact/hooks";
 import type { PinnedChat } from "../../../types/messages";
@@ -48,6 +49,9 @@ const PinnedChatsSection = () => {
 
   useEffect(() => {
     const cleanup = monitorForElements({
+      onDragStart: () => {
+        preventUnhandled.start();
+      },
       onDrop: ({ source, location }) => {
         const target = location.current.dropTargets[0];
         if (!target) return;
