@@ -154,7 +154,6 @@ const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
       data-discover="true"
       onClick={handleLinkClick}
       style={{
-        ...(depth > 0 ? { paddingLeft: `${depth * 20 + 8}px` } : {}),
         ...(isDragging ? { opacity: 0.5 } : {}),
         ...dropIndicatorStyle,
       }}
