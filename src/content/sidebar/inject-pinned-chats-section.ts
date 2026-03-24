@@ -9,10 +9,18 @@ const findChatsSection = (): Element | null =>
     .querySelector("div#history")
     ?.closest(".group\\/sidebar-expando-section") ?? null;
 
+const preventNativeDrag = (e: Event) => {
+  e.preventDefault();
+  e.stopImmediatePropagation();
+};
+
 const inject = (): (() => void) | null => {
   const chatsSection = findChatsSection();
   if (!chatsSection || chatsSection.hasAttribute(MARKER)) return null;
   chatsSection.setAttribute(MARKER, "1");
+
+  const historyEl = chatsSection.querySelector("div#history");
+  historyEl?.addEventListener("dragstart", preventNativeDrag, true);
 
   const container = document.createElement("div");
   chatsSection.parentElement?.insertBefore(container, chatsSection);
@@ -21,6 +29,7 @@ const inject = (): (() => void) | null => {
 
   return () => {
     dispose();
+    historyEl?.removeEventListener("dragstart", preventNativeDrag, true);
     container.remove();
     chatsSection.removeAttribute(MARKER);
   };

@@ -1,31 +1,104 @@
 /** @jsxImportSource preact */
-import { useCallback, useEffect, useRef, useState } from "preact/hooks";
-import {
-  getPins,
-  onPinsChange,
-  type Pin,
-  requestUnpin,
-  updatePinPreview,
-} from "../../storage";
-import { navigateToPath } from "../../utils/navigate";
-import { useCollapsed } from "../useCollapsed";
-import { useSettingsValue } from "../useSettingsValue";
 
-type PinItemProps = {
-  pin: Pin;
-  onUnpinClick: (pin: Pin) => void;
+import {
+  draggable,
+  dropTargetForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
+import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
+import {
+  attachClosestEdge,
+  extractClosestEdge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import type { PinnedChat } from "../../../types/messages";
+import {
+  requestUnfavourite,
+  updatePinnedChatTitle,
+} from "../../pinnedChatsStorage";
+import { navigateToPath } from "../../utils/navigate";
+import { MAX_FOLDER_DEPTH } from "../types";
+
+type PinnedChatItemProps = {
+  chat: PinnedChat;
+  depth?: number;
+  activeConversationId?: string | null;
 };
 
-const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
+const PinnedChatItem = ({
+  chat,
+  depth = 0,
+  activeConversationId,
+}: PinnedChatItemProps) => {
+  const elementRef = useRef<HTMLDivElement>(null);
+  const [dropEdge, setDropEdge] = useState<"top" | "bottom" | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState({ left: 0, top: 0 });
   const [renaming, setRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState(pin.preview);
+  const [renameValue, setRenameValue] = useState(chat.title);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const pinKey = `${pin.conversationId}:${pin.messageId}`;
+  useEffect(() => {
+    const el = elementRef.current;
+    if (!el) return;
+
+    const cleanupDrag = draggable({
+      element: el,
+      getInitialData: () => ({
+        sourceType: "chat",
+        sourceId: chat.conversationId,
+      }),
+      onGenerateDragPreview: ({ nativeSetDragImage, location, source }) => {
+        setCustomNativeDragPreview({
+          nativeSetDragImage,
+          getOffset: preserveOffsetOnSource({
+            element: source.element,
+            input: location.current.input,
+          }),
+          render: ({ container }) => {
+            const clone = el.cloneNode(true) as HTMLElement;
+            clone.style.width = `${el.offsetWidth}px`;
+            clone.style.borderRadius = "10px";
+            clone.style.backgroundColor = "var(--bg-primary)";
+            clone.style.opacity = "0.9";
+            container.appendChild(clone);
+          },
+        });
+      },
+      onDragStart: () => setIsDragging(true),
+      onDrop: () => setIsDragging(false),
+    });
+
+    const cleanupDrop = dropTargetForElements({
+      element: el,
+      getData: ({ input, element }) =>
+        attachClosestEdge(
+          { targetType: "chat", targetId: chat.conversationId },
+          { input, element, allowedEdges: ["top", "bottom"] },
+        ),
+      canDrop: ({ source }) => {
+        if (source.data.sourceType === "folder") {
+          const srcDepth = Number(source.data.sourceFolderDepth) || 1;
+          return depth + srcDepth < MAX_FOLDER_DEPTH;
+        }
+        return true;
+      },
+      onDragEnter: ({ self }) =>
+        setDropEdge(extractClosestEdge(self.data) as "top" | "bottom" | null),
+      onDrag: ({ self }) =>
+        setDropEdge(extractClosestEdge(self.data) as "top" | "bottom" | null),
+      onDragLeave: () => setDropEdge(null),
+      onDrop: () => setDropEdge(null),
+    });
+
+    return () => {
+      cleanupDrag();
+      cleanupDrop();
+    };
+  }, [chat.conversationId, depth]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -43,11 +116,11 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
 
   const commitRename = useCallback(() => {
     const trimmed = renameValue.trim();
-    if (trimmed && trimmed !== pin.preview) {
-      updatePinPreview(pin.conversationId, pin.messageId, trimmed);
+    if (trimmed && trimmed !== chat.title) {
+      updatePinnedChatTitle(chat.conversationId, trimmed);
     }
     setRenaming(false);
-  }, [renameValue, pin]);
+  }, [renameValue, chat]);
 
   const handleMenuClick = (e: MouseEvent) => {
     e.preventDefault();
@@ -63,7 +136,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
     e.preventDefault();
     e.stopPropagation();
     setMenuOpen(false);
-    setRenameValue(pin.preview);
+    setRenameValue(chat.title);
     setRenaming(true);
   };
 
@@ -84,21 +157,44 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
       return;
     }
     e.preventDefault();
-    navigateToPath(`/branch/${pin.conversationId}/${pin.messageId}`);
+    navigateToPath(`/c/${chat.conversationId}`);
   };
 
   return (
-    <a
-      key={pinKey}
+    <div
+      ref={elementRef}
+      role="button"
       tabIndex={0}
       data-fill=""
+      data-active={
+        activeConversationId === chat.conversationId ? "" : undefined
+      }
       class="group __menu-item hoverable"
-      draggable={false}
       data-sidebar-item="true"
-      href={`/branch/${pin.conversationId}/${pin.messageId}`}
-      data-discover="true"
       onClick={handleLinkClick}
+      onKeyDown={(e: KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          handleLinkClick(e as unknown as MouseEvent);
+        }
+      }}
+      style={{
+        position: "relative",
+        ...(isDragging ? { opacity: 0.5 } : {}),
+      }}
     >
+      {dropEdge === "bottom" && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            height: "2px",
+            backgroundColor: "var(--text-accent)",
+            zIndex: 1,
+            bottom: 0,
+          }}
+        />
+      )}
       <div class="flex min-w-0 grow items-center gap-2.5">
         {renaming ? (
           <input
@@ -115,7 +211,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
             onClick={(e: MouseEvent) => e.preventDefault()}
           />
         ) : (
-          <div class="truncate">{pin.preview || "Pinned message"}</div>
+          <div class="truncate">{chat.title || "Untitled chat"}</div>
         )}
       </div>
       <div class="trailing-pair">
@@ -144,22 +240,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
             </div>
           </button>
         </div>
-        <div class="trailing text-token-text-tertiary" tabIndex={-1}>
-          <span aria-hidden="true">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              aria-hidden="true"
-              class="icon-xs text-token-icon-tertiary opacity-50"
-            >
-              <use
-                href="/cdn/assets/sprites-core-fk4oovux.svg#a8c6bd"
-                fill="currentColor"
-              />
-            </svg>
-          </span>
-        </div>
+        <div class="trailing text-token-text-tertiary" tabIndex={-1} />
         {menuOpen && (
           <div
             ref={menuRef}
@@ -212,13 +293,13 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setMenuOpen(false);
-                onUnpinClick(pin);
+                requestUnfavourite(chat);
               }}
               onKeyDown={(e: KeyboardEvent) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
                   setMenuOpen(false);
-                  onUnpinClick(pin);
+                  requestUnfavourite(chat);
                 }
               }}
             >
@@ -227,118 +308,28 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
                   height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                   aria-hidden="true"
                   class="icon"
                 >
-                  <use
-                    href="/cdn/assets/sprites-core-fk4oovux.svg#13322a"
-                    fill="currentColor"
-                  />
+                  <path d="m10.344 4.688 1.181-2.393a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.237 3.152" />
+                  <path d="m17.945 17.945.43 2.505a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a8 8 0 0 0 .4-.099" />
+                  <path d="m2 2 20 20" />
                 </svg>
               </div>
-              Unpin
+              Unfavourite
             </div>
           </div>
         )}
       </div>
-    </a>
-  );
-};
-
-const PinsSection = () => {
-  const [pins, setPins] = useState<Pin[]>(getPins);
-  const [expanded, setExpanded] = useState(false);
-  const [collapsed, setCollapsed] = useCollapsed("bulavka-pins-collapsed");
-  const initialVisible = useSettingsValue("initialPinsVisible", 3);
-  const sectionEnabled = useSettingsValue("pinsSectionEnabled", true);
-
-  useEffect(() => onPinsChange(setPins), []);
-
-  if (!sectionEnabled) return null;
-  if (pins.length === 0) return null;
-
-  const visible = expanded ? pins : pins.slice(0, initialVisible);
-  const hasMore = pins.length > initialVisible;
-
-  return (
-    <div class="group/sidebar-expando-section mb-[var(--sidebar-expanded-section-margin-bottom)]">
-      <button
-        type="button"
-        aria-expanded={!collapsed}
-        class="text-token-text-tertiary flex w-full items-center justify-start gap-0.5 px-4 py-1.5"
-        onClick={() => setCollapsed((c) => !c)}
-      >
-        <h2 class="__menu-label" data-no-spacing="true">
-          Pinned replies
-        </h2>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          aria-hidden="true"
-          data-rtl-flip=""
-          class={
-            collapsed
-              ? "h-3 w-3 shrink-0"
-              : "invisible h-3 w-3 shrink-0 group-hover/sidebar-expando-section:visible"
-          }
-        >
-          <use
-            href={`/cdn/assets/sprites-core-fk4oovux.svg#${collapsed ? "d3876b" : "ba3792"}`}
-            fill="currentColor"
-          />
-        </svg>
-      </button>
-      {!collapsed &&
-        visible.map((pin) => (
-          <PinItem
-            key={`${pin.conversationId}:${pin.messageId}`}
-            pin={pin}
-            onUnpinClick={requestUnpin}
-          />
-        ))}
-      {!collapsed && hasMore && (
-        <button
-          type="button"
-          class="group __menu-item hoverable gap-1.5 w-full"
-          data-sidebar-item="true"
-          onClick={(e) => {
-            setExpanded((prev) => !prev);
-            const btn = e.currentTarget as HTMLElement;
-            btn.blur();
-            btn.style.pointerEvents = "none";
-            requestAnimationFrame(() => {
-              btn.style.pointerEvents = "";
-            });
-          }}
-          onMouseLeave={(e) => (e.currentTarget as HTMLElement).blur()}
-        >
-          <div class="flex items-center justify-center group-disabled:opacity-50 group-data-disabled:opacity-50 icon">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-              class="icon"
-            >
-              <circle cx="12" cy="12" r="1" />
-              <circle cx="19" cy="12" r="1" />
-              <circle cx="5" cy="12" r="1" />
-            </svg>
-          </div>
-          <div class="flex min-w-0 grow items-center gap-2.5">
-            <div class="truncate">{expanded ? "Show less" : "More"}</div>
-          </div>
-        </button>
-      )}
     </div>
   );
 };
 
-export { PinsSection };
+export { PinnedChatItem };
+export type { PinnedChatItemProps };
