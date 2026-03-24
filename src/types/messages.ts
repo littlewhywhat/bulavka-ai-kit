@@ -58,6 +58,10 @@ type BackgroundMessages = {
     request: PinnedChat;
     response: undefined;
   };
+  "request-show-favourite-limit-modal": {
+    request: { max: number };
+    response: undefined;
+  };
   "analytics-user-action": {
     request: { action: UserAction };
     response: undefined;
@@ -71,6 +75,10 @@ type ContentMessages = {
   };
   "show-unfavourite-modal": {
     request: PinnedChat;
+    response: undefined;
+  };
+  "show-favourite-limit-modal": {
+    request: { max: number };
     response: undefined;
   };
 };
