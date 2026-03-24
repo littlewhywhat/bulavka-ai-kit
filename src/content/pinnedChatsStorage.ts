@@ -28,6 +28,10 @@ const removePinnedChat = (conversationId: string): void => {
   sendMessage("pinned-chats-remove", { conversationId });
 };
 
+const requestShowFavouriteLimit = (max: number): void => {
+  sendMessage("request-show-favourite-limit-modal", { max });
+};
+
 const updatePinnedChatTitle = (conversationId: string, title: string): void => {
   sendMessage("pinned-chats-update-title", { conversationId, title });
 };
@@ -68,6 +72,7 @@ export {
   isPinnedChat,
   addPinnedChat,
   requestUnfavourite,
+  requestShowFavouriteLimit,
   loadPinnedChats,
   removePinnedChat,
   updatePinnedChatTitle,

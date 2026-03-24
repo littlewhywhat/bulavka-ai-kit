@@ -103,11 +103,15 @@ const registerHandlers = () => {
   onBackgroundMessage("pinned-chats-add", async (chat) => {
     const maxPinnedChats = await storage.get("maxPinnedChats");
     const chats = await readPinnedChats();
+    const isUpdate = chats.some(
+      (c) => c.conversationId === chat.conversationId,
+    );
+    if (!isUpdate && chats.length >= maxPinnedChats) return undefined;
     const filtered = chats.filter(
       (c) => c.conversationId !== chat.conversationId,
     );
     filtered.unshift(chat);
-    await writePinnedChats(filtered.slice(0, maxPinnedChats));
+    await writePinnedChats(filtered);
     sendUserAction("favourite_chat");
     return undefined;
   });
@@ -125,6 +129,16 @@ const registerHandlers = () => {
     async (chat, sender) => {
       if (sender.tab?.id != null) {
         await sendToTab(sender.tab.id, "show-unfavourite-modal", chat);
+      }
+      return undefined;
+    },
+  );
+
+  onBackgroundMessage(
+    "request-show-favourite-limit-modal",
+    async (payload, sender) => {
+      if (sender.tab?.id != null) {
+        await sendToTab(sender.tab.id, "show-favourite-limit-modal", payload);
       }
       return undefined;
     },
