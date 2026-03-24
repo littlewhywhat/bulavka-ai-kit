@@ -93,6 +93,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
       tabIndex={0}
       data-fill=""
       class="group __menu-item hoverable"
+      draggable={false}
       data-sidebar-item="true"
       href={`/branch/${pin.conversationId}/${pin.messageId}`}
       data-discover="true"

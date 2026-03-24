@@ -4,8 +4,8 @@ import {
   draggable,
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
+import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 import {
   attachClosestEdge,
   extractClosestEdge,
@@ -25,7 +25,11 @@ type PinnedChatItemProps = {
   activeConversationId?: string | null;
 };
 
-const PinnedChatItem = ({ chat, depth = 0, activeConversationId }: PinnedChatItemProps) => {
+const PinnedChatItem = ({
+  chat,
+  depth = 0,
+  activeConversationId,
+}: PinnedChatItemProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const [dropEdge, setDropEdge] = useState<"top" | "bottom" | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -159,12 +163,20 @@ const PinnedChatItem = ({ chat, depth = 0, activeConversationId }: PinnedChatIte
   return (
     <div
       ref={elementRef}
+      role="button"
       tabIndex={0}
       data-fill=""
-      data-active={activeConversationId === chat.conversationId ? "" : undefined}
+      data-active={
+        activeConversationId === chat.conversationId ? "" : undefined
+      }
       class="group __menu-item hoverable"
       data-sidebar-item="true"
       onClick={handleLinkClick}
+      onKeyDown={(e: KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          handleLinkClick(e as unknown as MouseEvent);
+        }
+      }}
       style={{
         position: "relative",
         ...(isDragging ? { opacity: 0.5 } : {}),

@@ -3,8 +3,8 @@ import {
   draggable,
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source";
+import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import type { PinnedChat } from "../../../types/messages";
 import {
@@ -231,7 +231,8 @@ const FolderRow = ({
   const dropIndicatorStyle =
     dropAction === "into"
       ? {
-          backgroundColor: "color-mix(in srgb, var(--text-accent) 8%, transparent)",
+          backgroundColor:
+            "color-mix(in srgb, var(--text-accent) 8%, transparent)",
           borderRadius: "8px",
         }
       : {};
@@ -549,7 +550,12 @@ const FolderRow = ({
               const chat = chatsMap.get(child.id);
               if (!chat) return null;
               return (
-                <PinnedChatItem key={child.id} chat={chat} depth={depth + 1} activeConversationId={activeConversationId} />
+                <PinnedChatItem
+                  key={child.id}
+                  chat={chat}
+                  depth={depth + 1}
+                  activeConversationId={activeConversationId}
+                />
               );
             }
             if (child.type === "folder") {
