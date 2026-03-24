@@ -242,7 +242,10 @@ const FolderRow = ({
         tabIndex={0}
         class="group __menu-item hoverable"
         data-sidebar-item="true"
-        onClick={handleToggle}
+        onClick={(e: MouseEvent) => {
+          handleToggle();
+          (e.currentTarget as HTMLElement).blur();
+        }}
         onMouseEnter={() => {
           if (!suppressHover.current) setHovered(true);
         }}
