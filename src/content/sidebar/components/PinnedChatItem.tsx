@@ -155,8 +155,6 @@ const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
     navigateToPath(`/c/${chat.conversationId}`);
   };
 
-  const showDropLine = dropEdge === "top" || dropEdge === "bottom";
-
   return (
     <div
       ref={elementRef}
@@ -170,7 +168,7 @@ const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
         ...(isDragging ? { opacity: 0.5 } : {}),
       }}
     >
-      {showDropLine && (
+      {dropEdge === "bottom" && (
         <div
           style={{
             position: "absolute",
@@ -179,7 +177,7 @@ const PinnedChatItem = ({ chat, depth = 0 }: PinnedChatItemProps) => {
             height: "2px",
             backgroundColor: "var(--text-accent)",
             zIndex: 1,
-            ...(dropEdge === "top" ? { top: 0 } : { bottom: 0 }),
+            bottom: 0,
           }}
         />
       )}

@@ -260,7 +260,7 @@ const FolderRow = ({
           ...dropIndicatorStyle,
         }}
       >
-        {(dropAction === "before" || dropAction === "after") && (
+        {dropAction === "after" && (
           <div
             style={{
               position: "absolute",
@@ -269,7 +269,7 @@ const FolderRow = ({
               height: "2px",
               backgroundColor: "var(--text-accent)",
               zIndex: 1,
-              ...(dropAction === "before" ? { top: 0 } : { bottom: 0 }),
+              bottom: 0,
             }}
           />
         )}
