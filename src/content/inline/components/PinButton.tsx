@@ -1,5 +1,6 @@
 /** @jsxImportSource preact */
 import { useEffect, useRef, useState } from "preact/hooks";
+import { chatgptConfig } from "../../chatgpt-config";
 import { useSettingsValue } from "../../sidebar/useSettingsValue";
 import { addPin, onPinsChange, type Pin, requestUnpin } from "../../storage";
 import { getConversationIdFromUrl } from "../../utils/chatgpt";
@@ -10,19 +11,21 @@ type PinButtonProps = {
 };
 
 const resolveMessageId = (btn: HTMLElement): string | undefined => {
-  const section = btn.closest("section");
+  const section = btn.closest(chatgptConfig.selectors.assistantSection);
   if (!section) return undefined;
-  const nearest = btn.closest("div[data-message-id]");
+  const nearest = btn.closest(chatgptConfig.selectors.messageElement);
   if (nearest && section.contains(nearest))
-    return nearest.getAttribute("data-message-id") ?? undefined;
-  const any = section.querySelector("div[data-message-id]");
-  return any?.getAttribute("data-message-id") ?? undefined;
+    return (
+      nearest.getAttribute(chatgptConfig.attributes.messageId) ?? undefined
+    );
+  const any = section.querySelector(chatgptConfig.selectors.messageElement);
+  return any?.getAttribute(chatgptConfig.attributes.messageId) ?? undefined;
 };
 
 const extractPreview = (btn: HTMLElement): string => {
-  const section = btn.closest("section");
+  const section = btn.closest(chatgptConfig.selectors.assistantSection);
   if (!section) return "";
-  const msgEl = section.querySelector("div[data-message-id]");
+  const msgEl = section.querySelector(chatgptConfig.selectors.messageElement);
   const text = (msgEl ?? section).textContent ?? "";
   return text
     .trim()
@@ -131,8 +134,8 @@ const PinButton = ({ available }: PinButtonProps) => {
           <use
             href={
               pinned
-                ? "/cdn/assets/sprites-core-fk4oovux.svg#13322a"
-                : "/cdn/assets/sprites-core-fk4oovux.svg#23d2ff"
+                ? chatgptConfig.sprites.pinFilled
+                : chatgptConfig.sprites.pinOutline
             }
             fill="currentColor"
           />

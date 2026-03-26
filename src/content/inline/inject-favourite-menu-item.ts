@@ -1,4 +1,5 @@
 import { observe } from "../../common/content/inline/observe";
+import { chatgptConfig } from "../chatgpt-config";
 import {
   addPinnedChat,
   getPinnedChats,
@@ -9,8 +10,6 @@ import {
 } from "../pinnedChatsStorage";
 
 const MARKER = "data-bulavka-fav-injected";
-const MENU_SELECTOR =
-  '[data-radix-menu-content][role="menu"][data-state="open"]';
 
 let maxPinnedChats = 5;
 
@@ -44,17 +43,20 @@ const findTriggerForMenu = (menu: Element): Element | null => {
   const labelId = menu.getAttribute("aria-labelledby");
   if (!labelId) return null;
   const label = document.getElementById(labelId);
-  if (!label?.hasAttribute("data-conversation-options-trigger")) return null;
+  if (!label?.hasAttribute(chatgptConfig.attributes.conversationOptionsTrigger))
+    return null;
   return label;
 };
 
 const getConversationId = (trigger: Element): string | null =>
-  trigger.getAttribute("data-conversation-options-trigger");
+  trigger.getAttribute(chatgptConfig.attributes.conversationOptionsTrigger);
 
 const getChatTitle = (trigger: Element): string => {
-  const anchor = trigger.closest("a[data-sidebar-item]");
+  const anchor = trigger.closest(chatgptConfig.selectors.sidebarItem);
   return (
-    anchor?.querySelector(".truncate")?.textContent?.trim() || "Untitled"
+    anchor
+      ?.querySelector(chatgptConfig.selectors.truncatedText)
+      ?.textContent?.trim() || "Untitled"
   ).slice(0, 40);
 };
 
@@ -151,9 +153,12 @@ const injectIntoMenu = (menu: Element) => {
     (c) => c.conversationId === conversationId,
   );
 
-  const menuItems = menu.querySelectorAll('[role="menuitem"]');
+  const menuItems = menu.querySelectorAll(chatgptConfig.selectors.menuItem);
   const pinItem = Array.from(menuItems).find((el) =>
-    el.textContent?.trim().toLowerCase().includes("pin chat"),
+    el.textContent
+      ?.trim()
+      .toLowerCase()
+      .includes(chatgptConfig.text.pinChatMenuItem),
   );
 
   const menuItem = createMenuItem(
@@ -166,7 +171,9 @@ const injectIntoMenu = (menu: Element) => {
   if (pinItem) {
     pinItem.parentElement?.insertBefore(menuItem, pinItem);
   } else {
-    const separators = menu.querySelectorAll('[role="separator"]');
+    const separators = menu.querySelectorAll(
+      chatgptConfig.selectors.menuSeparator,
+    );
     if (separators.length > 0) {
       separators[0].parentElement?.insertBefore(menuItem, separators[0]);
     } else {
@@ -180,7 +187,7 @@ const initFavouriteMenuItem = (): { dispose: () => void } => {
   const disposeSync = syncMaxPinnedChats();
 
   const { dispose: observeDispose } = observe({
-    selector: MENU_SELECTOR,
+    selector: chatgptConfig.selectors.openContextMenu,
     onElement: (menu) => {
       injectIntoMenu(menu);
       return undefined;

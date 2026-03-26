@@ -12,6 +12,7 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import type { PinnedChat } from "../../../types/messages";
+import { chatgptConfig } from "../../chatgpt-config";
 import {
   requestUnfavourite,
   updatePinnedChatTitle,
@@ -233,7 +234,7 @@ const PinnedChatItem = ({
                 class="icon"
               >
                 <use
-                  href="/cdn/assets/sprites-core-fk4oovux.svg#f6d0e2"
+                  href={chatgptConfig.sprites.menuDots}
                   fill="currentColor"
                 />
               </svg>
@@ -277,7 +278,7 @@ const PinnedChatItem = ({
                   class="icon"
                 >
                   <use
-                    href="/cdn/assets/sprites-core-fk4oovux.svg#6d87e1"
+                    href={chatgptConfig.sprites.rename}
                     fill="currentColor"
                   />
                 </svg>

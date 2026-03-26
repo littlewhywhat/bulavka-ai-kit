@@ -5,6 +5,7 @@ import { preventUnhandled } from "@atlaskit/pragmatic-drag-and-drop/prevent-unha
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { useEffect, useState } from "preact/hooks";
 import type { PinnedChat } from "../../../types/messages";
+import { chatgptConfig } from "../../chatgpt-config";
 import { getPinnedChats, onPinnedChatsChange } from "../../pinnedChatsStorage";
 import { getConversationIdFromUrl } from "../../utils/chatgpt";
 import { createFolder, getFolders, onFoldersChange } from "../foldersStorage";
@@ -135,7 +136,11 @@ const PinnedChatsSection = () => {
             }
           >
             <use
-              href={`/cdn/assets/sprites-core-fk4oovux.svg#${collapsed ? "d3876b" : "ba3792"}`}
+              href={
+                collapsed
+                  ? chatgptConfig.sprites.chevronCollapsed
+                  : chatgptConfig.sprites.chevronExpanded
+              }
               fill="currentColor"
             />
           </svg>
