@@ -1,13 +1,14 @@
 import { h } from "preact";
 import { mountInline } from "../../common/content/inline/mount";
+import { chatgptConfig } from "../chatgpt-config";
 import { PinnedChatsSection } from "./components/PinnedChatsSection";
 
 const MARKER = "data-bulavka-pinned-chats";
 
 const findChatsSection = (): Element | null =>
   document
-    .querySelector("div#history")
-    ?.closest(".group\\/sidebar-expando-section") ?? null;
+    .querySelector(chatgptConfig.selectors.historyContainer)
+    ?.closest(chatgptConfig.selectors.expandoSection) ?? null;
 
 const preventNativeDrag = (e: Event) => {
   e.preventDefault();
@@ -19,7 +20,9 @@ const inject = (): (() => void) | null => {
   if (!chatsSection || chatsSection.hasAttribute(MARKER)) return null;
   chatsSection.setAttribute(MARKER, "1");
 
-  const historyEl = chatsSection.querySelector("div#history");
+  const historyEl = chatsSection.querySelector(
+    chatgptConfig.selectors.historyContainer,
+  );
   historyEl?.addEventListener("dragstart", preventNativeDrag, true);
 
   const container = document.createElement("div");

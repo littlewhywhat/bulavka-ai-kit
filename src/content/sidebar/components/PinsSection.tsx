@@ -1,5 +1,6 @@
 /** @jsxImportSource preact */
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { chatgptConfig } from "../../chatgpt-config";
 import {
   getPins,
   onPinsChange,
@@ -137,7 +138,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
                 class="icon"
               >
                 <use
-                  href="/cdn/assets/sprites-core-fk4oovux.svg#f6d0e2"
+                  href={chatgptConfig.sprites.menuDots}
                   fill="currentColor"
                 />
               </svg>
@@ -153,10 +154,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
               aria-hidden="true"
               class="icon-xs text-token-icon-tertiary opacity-50"
             >
-              <use
-                href="/cdn/assets/sprites-core-fk4oovux.svg#a8c6bd"
-                fill="currentColor"
-              />
+              <use href={chatgptConfig.sprites.pinSmall} fill="currentColor" />
             </svg>
           </span>
         </div>
@@ -196,7 +194,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
                   class="icon"
                 >
                   <use
-                    href="/cdn/assets/sprites-core-fk4oovux.svg#6d87e1"
+                    href={chatgptConfig.sprites.rename}
                     fill="currentColor"
                   />
                 </svg>
@@ -231,7 +229,7 @@ const PinItem = ({ pin, onUnpinClick }: PinItemProps) => {
                   class="icon"
                 >
                   <use
-                    href="/cdn/assets/sprites-core-fk4oovux.svg#13322a"
+                    href={chatgptConfig.sprites.pinFilled}
                     fill="currentColor"
                   />
                 </svg>
@@ -284,7 +282,11 @@ const PinsSection = () => {
           }
         >
           <use
-            href={`/cdn/assets/sprites-core-fk4oovux.svg#${collapsed ? "d3876b" : "ba3792"}`}
+            href={
+              collapsed
+                ? chatgptConfig.sprites.chevronCollapsed
+                : chatgptConfig.sprites.chevronExpanded
+            }
             fill="currentColor"
           />
         </svg>

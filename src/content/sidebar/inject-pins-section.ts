@@ -1,13 +1,14 @@
 import { h } from "preact";
 import { mountInline } from "../../common/content/inline/mount";
+import { chatgptConfig } from "../chatgpt-config";
 import { PinsSection } from "./components/PinsSection";
 
 const MARKER = "data-bulavka-pins";
 
 const findChatsSection = (): Element | null =>
   document
-    .querySelector("div#history")
-    ?.closest(".group\\/sidebar-expando-section") ?? null;
+    .querySelector(chatgptConfig.selectors.historyContainer)
+    ?.closest(chatgptConfig.selectors.expandoSection) ?? null;
 
 const inject = (): (() => void) | null => {
   const chatsSection = findChatsSection();

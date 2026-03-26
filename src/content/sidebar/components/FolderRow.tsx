@@ -7,6 +7,7 @@ import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/elemen
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import type { PinnedChat } from "../../../types/messages";
+import { chatgptConfig } from "../../chatgpt-config";
 import {
   deleteFolder,
   renameFolder,
@@ -289,7 +290,7 @@ const FolderRow = ({
               class="shrink-0 icon"
             >
               <use
-                href="/cdn/assets/sprites-core-lbtco6v1.svg#61ee0c"
+                href={chatgptConfig.sprites.folderClosed}
                 fill="currentColor"
               />
             </svg>
@@ -450,7 +451,7 @@ const FolderRow = ({
                   class="icon"
                 >
                   <use
-                    href="/cdn/assets/sprites-core-fk4oovux.svg#f6d0e2"
+                    href={chatgptConfig.sprites.menuDots}
                     fill="currentColor"
                   />
                 </svg>
@@ -494,7 +495,7 @@ const FolderRow = ({
                     class="icon"
                   >
                     <use
-                      href="/cdn/assets/sprites-core-fk4oovux.svg#6d87e1"
+                      href={chatgptConfig.sprites.rename}
                       fill="currentColor"
                     />
                   </svg>
